@@ -2,40 +2,41 @@ import streamlit as st
 import google.generativeai as genai
 from pypdf import PdfReader
 import os
+import time
 
-# 1. ESTILO VISUAL: Letras Gigantes para personas mayores
+# 1. ESTILO VISUAL: Letras claras para celular (sin gritar)
 st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* Letra base muy grande para todo el chat */
+    /* Letra grande pero cómoda para celular */
     .stChatMessage, p, li, div {
-        font-size: 28px !important;
-        line-height: 1.5 !important;
+        font-size: 24px !important;
+        line-height: 1.4 !important;
+        color: #333333;
     }
-    /* El RECETARIO: Letra extra grande, negrita y destacada */
+    /* Recetario: Destacado pero sin ser gigante */
     .recetario-chef {
-        font-size: 34px !important;
-        font-weight: bold !important;
+        font-size: 24px !important;
+        background-color: #ffffff;
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px solid #FF4B4B;
+        margin-top: 10px;
         color: #000000;
-        background-color: #f9f9f9;
-        padding: 25px;
-        border-radius: 15px;
-        border: 3px solid #FF4B4B;
-        margin-top: 20px;
     }
-    /* Estilo para los títulos dentro de la receta */
-    .recetario-chef h1, .recetario-chef h2, .recetario-chef h3 {
-        font-size: 40px !important;
+    /* Títulos suaves, no gritados */
+    .recetario-chef h2 {
+        font-size: 28px !important;
         color: #FF4B4B !important;
+        text-transform: lowercase;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Chef-cito")
-st.markdown("---")
 
-# 2. CARGA ULTRA-RÁPIDA DE LOS LIBROS (Optimizado para velocidad)
+# 2. CARGA TURBO (Solo lo esencial para máxima velocidad)
 @st.cache_resource
 def cargar_biblioteca():
     texto_total = ""
@@ -43,76 +44,76 @@ def cargar_biblioteca():
     for archivo in archivos_pdf:
         try:
             lector = PdfReader(archivo)
-            # Leemos solo lo esencial para ganar esos 15 segundos de respuesta
-            for i, pagina in enumerate(lector.pages):
-                if i > 50: break # Límite de seguridad por libro
+            # Solo cargamos 50k caracteres para que vuele
+            for pagina in lector.pages:
                 texto_total += pagina.extract_text() + "\n"
+                if len(texto_total) > 50000: break
         except:
             continue
-    return texto_total[:80000] # Menos carga = Más velocidad
+    return texto_total[:50000]
 
 conocimiento_pdf = cargar_biblioteca()
 
-# 3. CONEXIÓN CON EL MODELO (Usando la versión Flash para máxima rapidez)
+# 3. CONEXIÓN CON GEMINI
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Por favor, configura la API Key.")
+    st.error("falta la llave en secrets.")
     st.stop()
 
 model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. MEMORIA Y DIÁLOGO NATURAL
+# 4. HISTORIAL DE MENSAJES
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Saludo inicial tierno
-    bienvenida = (
-        "¡Hola! Soy Chef-cito. 👨‍🍳✨\n\n"
-        "¡Qué alegría verte! Cuéntame, ¿de dónde me escribes y qué tienes hoy en tu cocina?"
-    )
-    st.session_state.messages.append({"role": "assistant", "content": bienvenida})
+    saludo = "¡hola! soy chef-cito. 👨‍🍳✨ ¿de qué parte nos escribes y qué tienes en tu cocina hoy?"
+    st.session_state.messages.append({"role": "assistant", "content": saludo})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. EL CEREBRO DE CHEF-CITO (Personalidad variable y creativa)
-if prompt := st.chat_input("Escribe aquí..."):
+# 5. LÓGICA DE RESPUESTA CON EFECTO MAQUINA DE ESCRIBIR
+if prompt := st.chat_input("escribe aquí..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # Detectamos si es una charla fluida para no repetir el nombre
+        es_primera_vez = len(st.session_state.messages) < 3
+        
+        instruccion = (
+            f"eres 'chef-cito'. hablas con personas mayores de forma dulce y breve. "
+            f"usa tus libros ({conocimiento_pdf}) y la web. "
+            f"REGLAS:\n"
+            f"1. si ya se presentaron, NO digas 'soy tu chef-cito', solo responde con cariño.\n"
+            f"2. usa minúsculas mayormente, que se sienta suave al leer.\n"
+            f"3. si es receta, usa el formato: nombre, valor nutritivo, regla 50/25/25, paso a paso, residuo cero y toque maestro.\n"
+            f"4. termina siempre preguntando: '¿te gustaría preparar algún otro platillo?'\n"
+            f"5. sé muy breve y usa viñetas."
+        )
+
         try:
-            # Instrucción Maestra Dinámica
-            instruccion_maestra = (
-                f"Eres 'Chef-cito (15 años de exp.)'. Hablas con personas mayores de forma dulce y sencilla. "
-                f"Usa tus libros ({conocimiento_pdf}) y la web para responder. "
-                f"REGLAS DE ORO:\n"
-                f"1. Si es el inicio de la charla, preséntate. Si ya están hablando, NO repitas 'Soy tu Chef-cito', sé natural.\n"
-                f"2. Si das una receta, usa este formato dentro de un recuadro (div class='recetario-chef'):\n"
-                f"   - Nombre del plato (¡Ponle un nombre creativo!)\n"
-                f"   - Valor Nutritivo 💪\n"
-                f"   - Proporciones (Regla 50/25/25)\n"
-                f"   - Paso a Paso 🍳 (usa verbos como 'Sella la magia', 'Aroma regional')\n"
-                f"   - Residuo Cero (consejo para no botar nada)\n"
-                f"   - El Plus de Chef-cito 💡\n"
-                f"   - Toque Maestro 🌟\n"
-                f"3. Al terminar CUALQUIER respuesta, pregunta cariñosamente si desean preparar algo más.\n"
-                f"4. Sé muy breve fuera del recetario. Letras grandes siempre."
-            )
+            # Generar respuesta con efecto de escritura fluida
+            response = model.generate_content([instruccion, prompt], stream=True)
             
-            # Generar respuesta
-            response = model.generate_content([instruccion_maestra, prompt])
+            def stream_data():
+                for chunk in response:
+                    for word in chunk.text.split(" "):
+                        yield word + " "
+                        time.sleep(0.04) # velocidad de escritura
+
+            # Mostramos el texto con el efecto
+            full_response = st.write_stream(stream_data())
             
-            # Si la respuesta parece una receta, le ponemos el diseño especial
-            if "Paso a Paso" in response.text or "Regla" in response.text:
-                final_text = f'<div class="recetario-chef">{response.text}</div>'
+            # Si detectamos que es receta, le ponemos el estilo visual después
+            if "paso a paso" in full_response.lower():
+                final_html = f'<div class="recetario-chef">{full_response}</div>'
+                # Guardamos con el estilo
+                st.session_state.messages.append({"role": "assistant", "content": final_html})
             else:
-                final_text = response.text
-            
-            st.markdown(final_text, unsafe_allow_html=True)
-            st.session_state.messages.append({"role": "assistant", "content": final_text})
-            
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                
         except Exception:
-            st.error("¡Ay! La hornilla se apagó. ¿Me repites eso, por favor?")
+            st.error("un pequeño error en la cocina, ¿me lo repites?")
