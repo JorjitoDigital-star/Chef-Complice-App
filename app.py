@@ -4,7 +4,7 @@ from pypdf import PdfReader
 import os
 import time
 
-# 1. ESTILO VISUAL: Letras grandes y gramática profesional
+# 1. ESTILO VISUAL: Letras grandes para celular
 st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -12,7 +12,6 @@ st.markdown("""
     .stChatMessage, p, li, div {
         font-size: 24px !important;
         line-height: 1.5 !important;
-        color: #333333;
     }
     .recetario-chef {
         font-size: 26px !important;
@@ -21,31 +20,25 @@ st.markdown("""
         border-radius: 15px;
         border: 3px solid #FF4B4B;
         margin-top: 15px;
-        color: #000000;
-    }
-    .recetario-chef h2 {
-        font-size: 30px !important;
-        color: #FF4B4B !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Chef-cito")
 
-# 2. CARGA TURBO (Límite de 50k para velocidad)
+# 2. CARGA TURBO (Límite para velocidad)
 @st.cache_resource
 def cargar_biblioteca():
-    texto_total = ""
-    archivos_pdf = [f for f in os.listdir('.') if f.endswith('.pdf')]
-    for archivo in archivos_pdf:
+    texto = ""
+    archivos = [f for f in os.listdir('.') if f.endswith('.pdf')]
+    for arc in archivos:
         try:
-            lector = PdfReader(archivo)
-            for pagina in lector.pages:
-                texto_total += pagina.extract_text() + "\n"
-                if len(texto_total) > 50000: break
-        except:
-            continue
-    return texto_total[:50000]
+            lector = PdfReader(arc)
+            for pag in lector.pages:
+                texto += pag.extract_text() + "\n"
+                if len(texto) > 40000: break
+        except: continue
+    return texto[:40000]
 
 conocimiento_pdf = cargar_biblioteca()
 
@@ -53,44 +46,46 @@ conocimiento_pdf = cargar_biblioteca()
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Por favor, configura la llave en Secrets.")
+    st.error("Configura la llave en Secrets.")
     st.stop()
 
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+# USAMOS EL NOMBRE EXACTO DE TU CUENTA
+model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. MEMORIA DEL CHAT
+# 4. HISTORIAL
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    saludo_inicial = "¡Hola! Soy Chef-cito. 👨‍🍳✨ ¡Qué alegría encontrarte! Cuéntame, ¿de dónde nos escribes y qué tienes hoy en tu cocina?"
-    st.session_state.messages.append({"role": "assistant", "content": saludo_inicial})
+    saludo = "¡Hola! Soy Chef-cito. 👨‍🍳✨ ¡Qué alegría! Cuéntame, ¿de dónde nos escribes y qué tienes hoy en tu cocina?"
+    st.session_state.messages.append({"role": "assistant", "content": saludo})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. LÓGICA DE RESPUESTA
+# 5. LÓGICA SIN ERRORES
 if prompt := st.chat_input("Escribe aquí..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Instrucciones de personalidad
+        # Instrucción limpia
         instruccion = (
-            f"Eres 'Chef-cito (15 años de exp.)'. Hablas con personas mayores de forma dulce y respetuosa. "
-            f"Conocimiento base: {conocimiento_pdf}. "
-            f"REGLAS:\n"
-            f"1. GRAMÁTICA: Siempre Mayúsculas al iniciar y después de punto.\n"
-            f"2. SIEMPRE PREGUNTA para cuántos comensales si no lo han dicho.\n"
-            f"3. Si dicen 'no', 'gracias' o 'adiós', despídete con amor.\n"
-            f"4. Si es receta, usa el formato: Nombre, Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero, Plus y Toque Maestro.\n"
-            f"5. Termina siempre preguntando si desean algo más."
+            f"Eres 'Chef-cito (15 años de exp.)'. Dulce y breve con personas mayores. "
+            f"Referencia: {conocimiento_pdf}. "
+            f"REGLAS: 1. Gramática perfecta (Mayúsculas). 2. Pregunta siempre por comensales si no lo han dicho. "
+            f"3. Si dicen adiós o gracias, despídete con amor. 4. Si es receta usa el formato: Nombre, "
+            f"Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero y Toque Maestro. 5. Termina preguntando si desean algo más."
         )
 
         try:
-            # Llamada a la IA (Pasamos el historial simplificado para evitar errores)
-            history_context = "\n".join([f"{m['role']}: {m['content']}" for m in st.session_state.messages[-3:]])
-            response = model.generate_content([instruccion, history_context, prompt], stream=True)
+            # Enviamos solo los últimos mensajes SIN el código HTML para no confundir a la IA
+            contexto_limpio = ""
+            for m in st.session_state.messages[-4:]:
+                texto_sin_html = m['content'].replace('<div class="recetario-chef">', '').replace('</div>', '')
+                contexto_limpio += f"{m['role']}: {texto_sin_html}\n"
+
+            response = model.generate_content([instruccion, contexto_limpio, prompt], stream=True)
             
             def stream_data():
                 for chunk in response:
@@ -101,7 +96,6 @@ if prompt := st.chat_input("Escribe aquí..."):
 
             full_response = st.write_stream(stream_data())
             
-            # Formateo si es receta
             if "Paso a Paso" in full_response:
                 final_output = f'<div class="recetario-chef">{full_response}</div>'
             else:
@@ -110,5 +104,4 @@ if prompt := st.chat_input("Escribe aquí..."):
             st.session_state.messages.append({"role": "assistant", "content": final_output})
             
         except Exception as e:
-            st.warning("¡Uy! Hubo un pequeño error de conexión. ¿Me lo repites con cariño?")
-            print(f"Error: {e}")
+            st.warning("¡Ay! El fogón se apagó un segundo. ¿Podrías repetirme tu mensaje, por favor?")
