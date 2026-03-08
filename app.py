@@ -3,12 +3,28 @@ import google.generativeai as genai
 from pypdf import PdfReader
 import os
 
-# 1. Configuración de estilo
-st.set_page_config(page_title="Chef Cómplice 👨‍🍳", page_icon="👨‍🍳")
-st.title("👨‍🍳 Chef Cómplice")
+# 1. Configuración de Estilo y Letras Grandes
+st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
+
+# Código para agrandar la letra de los mensajes y del chat
+st.markdown("""
+    <style>
+    .stChatMessage {
+        font-size: 22px !important;
+    }
+    .stChatInput textarea {
+        font-size: 22px !important;
+    }
+    p {
+        font-size: 22px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("👨‍🍳 Chef-cito")
 st.markdown("---")
 
-# 2. Carga silenciosa de PDFs (Cerebro de fondo)
+# 2. Carga silenciosa de los libros
 @st.cache_resource
 def cargar_biblioteca():
     texto_total = ""
@@ -22,7 +38,7 @@ def cargar_biblioteca():
                     texto_total += extraido + "\n"
         except:
             continue
-    return texto_total[:120000] # Límite optimizado para no saturar
+    return texto_total[:120000]
 
 conocimiento_chef = cargar_biblioteca()
 
@@ -30,44 +46,40 @@ conocimiento_chef = cargar_biblioteca()
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la API Key en Secrets.")
+    st.error("Falta la llave secreta.")
     st.stop()
 
 model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. PERSONALIDAD: El Saludo y el Historial
+# 4. Diálogo de Chef-cito
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # ESTE ES EL SALUDO AMIGABLE QUE KERÍAS
-    saludo_inicial = (
-        "¡Hola! ¡Soy tu Chef Cómplice! 👨‍🍳✨\n\n"
-        "Sea que tengas mucho o solo dos cositas en la refri, ¡aquí hacemos magia!\n\n"
-        "Para empezar, cuéntame: **¿De dónde me escribes, cuántos comensales son y qué ingredientes tienes hoy?**"
+    saludo = (
+        "¡Hola! Soy Chef-cito. 👨‍🍳✨\n\n"
+        "* ¿De dónde me escribes?\n"
+        "* ¿Cuántas personas van a comer?\n"
+        "* ¿Qué tienes en tu cocina?"
     )
-    st.session_state.messages.append({"role": "assistant", "content": saludo_inicial})
+    st.session_state.messages.append({"role": "assistant", "content": saludo})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. Lógica del Chat con Instrucciones de Personalidad
-if prompt := st.chat_input("Escribe tus ingredientes aquí..."):
+# 5. Respuesta Sencilla y Breve
+if prompt := st.chat_input("Escribe aquí..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # INSTRUCCIONES DE COMPORTAMIENTO (The "Secret Sauce")
+            # Instrucciones para que sea breve y no mencione PDFs
             system_instruction = (
-                f"Eres el 'Chef Cómplice', un asistente de cocina extremadamente amigable, entusiasta y creativo. "
-                f"Tu objetivo es ayudar a las personas a cocinar con lo que tienen a mano. "
-                f"REGLAS DE ORO:\n"
-                f"1. NO menciones que estás leyendo PDFs ni nombres archivos como 'LATINFOODS'. Eso es tu secreto.\n"
-                f"2. Usa el conocimiento de tus libros ({conocimiento_chef}) para dar recetas precisas, pero habla de forma natural.\n"
-                f"3. Siempre pregunta o ten en cuenta la ubicación del usuario, los ingredientes y cuántos son.\n"
-                f"4. Usa viñetas para que tus recetas sean fáciles de leer.\n"
-                f"5. Mantén un tono de 'complicidad' y alegría."
+                f"Eres 'Chef-cito'. Hablas con personas mayores de forma dulce, breve y simple. "
+                f"Usa viñetas para que se lea fácil. "
+                f"Usa este conocimiento pero NO digas que lo sacaste de un PDF o libro: {conocimiento_chef}. "
+                f"Responde máximo en dos párrafos cortos."
             )
             
             response = model.generate_content([system_instruction, prompt])
@@ -75,4 +87,4 @@ if prompt := st.chat_input("Escribe tus ingredientes aquí..."):
             st.session_state.messages.append({"role": "assistant", "content": response.text})
             
         except Exception as e:
-            st.error(f"¡Vaya! Hubo un problema en la hornilla: {e}")
+            st.error("¡Ay! Algo pasó en la cocina. Intenta de nuevo.")
