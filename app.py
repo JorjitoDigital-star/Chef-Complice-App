@@ -4,7 +4,7 @@ from pypdf import PdfReader
 import os
 import time
 
-# 1. ESTILO VISUAL: Letras grandes para celular
+# 1. ESTILO VISUAL: Letras grandes y legibles
 st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -14,19 +14,19 @@ st.markdown("""
         line-height: 1.5 !important;
     }
     .recetario-chef {
-        font-size: 26px !important;
+        font-size: 24px !important;
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 15px;
-        border: 3px solid #FF4B4B;
-        margin-top: 15px;
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px solid #FF4B4B;
+        margin-top: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Chef-cito")
 
-# 2. CARGA TURBO (Límite para velocidad)
+# 2. CARGA DE LIBROS (Optimización de velocidad)
 @st.cache_resource
 def cargar_biblioteca():
     texto = ""
@@ -49,10 +49,10 @@ else:
     st.error("Configura la llave en Secrets.")
     st.stop()
 
-# USAMOS EL NOMBRE EXACTO DE TU CUENTA
+# Usamos el nombre de modelo más estable
 model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. HISTORIAL
+# 4. MEMORIA
 if "messages" not in st.session_state:
     st.session_state.messages = []
     saludo = "¡Hola! Soy Chef-cito. 👨‍🍳✨ ¡Qué alegría! Cuéntame, ¿de dónde nos escribes y qué tienes hoy en tu cocina?"
@@ -62,33 +62,30 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. LÓGICA SIN ERRORES
+# 5. LÓGICA DE DIÁLOGO RESISTENTE
 if prompt := st.chat_input("Escribe aquí..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Instrucción limpia
+        # Preparamos una instrucción que combine todo de forma simple para la IA
         instruccion = (
             f"Eres 'Chef-cito (15 años de exp.)'. Dulce y breve con personas mayores. "
-            f"Referencia: {conocimiento_pdf}. "
-            f"REGLAS: 1. Gramática perfecta (Mayúsculas). 2. Pregunta siempre por comensales si no lo han dicho. "
-            f"3. Si dicen adiós o gracias, despídete con amor. 4. Si es receta usa el formato: Nombre, "
-            f"Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero y Toque Maestro. 5. Termina preguntando si desean algo más."
+            f"Referencia de libros: {conocimiento_pdf}. "
+            f"REGLAS: 1. Gramática perfecta (Mayúsculas iniciales). 2. Si no sabes para cuántos es, pregunta amablemente. "
+            f"3. Si dicen adiós o gracias, despídete con amor. 4. Si das receta usa el formato: Nombre, "
+            f"Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero y Toque Maestro. "
+            f"5. No repitas saludos si ya están hablando. 6. Siempre termina preguntando si desean algo más."
         )
 
         try:
-            # Enviamos solo los últimos mensajes SIN el código HTML para no confundir a la IA
-            contexto_limpio = ""
-            for m in st.session_state.messages[-4:]:
-                texto_sin_html = m['content'].replace('<div class="recetario-chef">', '').replace('</div>', '')
-                contexto_limpio += f"{m['role']}: {texto_sin_html}\n"
-
-            response = model.generate_content([instruccion, contexto_limpio, prompt], stream=True)
+            # Enviamos el mensaje actual con el contexto de forma simplificada
+            response = model.generate_content(f"{instruccion}\n\nUsuario dice: {prompt}", stream=True)
             
             def stream_data():
                 for chunk in response:
+                    # Validamos que el fragmento tenga texto antes de procesarlo
                     if chunk.text:
                         for word in chunk.text.split(" "):
                             yield word + " "
@@ -96,6 +93,7 @@ if prompt := st.chat_input("Escribe aquí..."):
 
             full_response = st.write_stream(stream_data())
             
+            # Guardamos la respuesta con o sin formato según corresponda
             if "Paso a Paso" in full_response:
                 final_output = f'<div class="recetario-chef">{full_response}</div>'
             else:
@@ -104,4 +102,4 @@ if prompt := st.chat_input("Escribe aquí..."):
             st.session_state.messages.append({"role": "assistant", "content": final_output})
             
         except Exception as e:
-            st.warning("¡Ay! El fogón se apagó un segundo. ¿Podrías repetirme tu mensaje, por favor?")
+            st.error("¡Ay! El fogón chispeó un poco. ¿Me podrías repetir tu mensaje?")
