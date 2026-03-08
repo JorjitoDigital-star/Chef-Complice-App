@@ -4,35 +4,40 @@ from pypdf import PdfReader
 import os
 import time
 
-# 1. ESTILO VISUAL: Gramática clara y letras para celular
+# 1. ESTILO VISUAL: Letras grandes para celular y gramática profesional
 st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
+    /* Fuente clara y grande para lectura cómoda */
     .stChatMessage, p, li, div {
         font-size: 24px !important;
         line-height: 1.5 !important;
         color: #333333;
     }
+    /* El Recetario: Destacado pero ajustable a la pantalla del móvil */
     .recetario-chef {
-        font-size: 24px !important;
+        font-size: 26px !important;
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 15px;
+        padding: 15px;
+        border-radius: 12px;
         border: 2px solid #FF4B4B;
-        margin-top: 15px;
+        margin-top: 10px;
         color: #000000;
+        font-weight: normal;
     }
+    /* Títulos con jerarquía correcta */
     .recetario-chef h2 {
-        font-size: 30px !important;
+        font-size: 28px !important;
         color: #FF4B4B !important;
+        margin-bottom: 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Chef-cito")
 
-# 2. CARGA TURBO (Optimización de 50k caracteres)
+# 2. CARGA ULTRA-RÁPIDA (Limitada a 50k para ganar velocidad)
 @st.cache_resource
 def cargar_biblioteca():
     texto_total = ""
@@ -49,62 +54,66 @@ def cargar_biblioteca():
 
 conocimiento_pdf = cargar_biblioteca()
 
-# 3. CONEXIÓN CON EL CEREBRO DE GOOGLE
+# 3. CONFIGURACIÓN DE IA
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la configuración de seguridad en Secrets.")
+    st.error("Por favor, verifica la configuración de la llave secreta.")
     st.stop()
 
 model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. MEMORIA DEL CHAT
+# 4. HISTORIAL CON MEMORIA DINÁMICA
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    saludo_inicial = "¡Hola! Soy Chef-cito. 👨‍🍳✨ Es un gusto saludarte. Cuéntame, ¿de qué parte nos escribes y qué tienes en tu cocina hoy?"
-    st.session_state.messages.append({"role": "assistant", "content": saludo_inicial})
+    saludo = "¡Hola! Soy Chef-cito. 👨‍🍳✨ ¡Qué alegría encontrarte! Cuéntame, ¿de dónde nos escribes y qué tienes hoy en tu cocina?"
+    st.session_state.messages.append({"role": "assistant", "content": saludo})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. LÓGICA DE RESPUESTA Y EFECTO DE ESCRITURA
-if prompt := st.chat_input("Escribe aquí tu mensaje..."):
+# 5. LÓGICA DE DIÁLOGO INTELIGENTE
+if prompt := st.chat_input("Escribe aquí..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # Instrucciones de personalidad y lógica de flujo
         instruccion = (
-            f"Eres 'Chef-cito'. Hablas con personas mayores de forma dulce, breve y natural. "
-            f"Usa tus libros ({conocimiento_pdf}) y la web. "
-            f"REGLAS:\n"
-            f"1. Usa gramática perfecta: Mayúsculas al inicio y después de punto.\n"
-            f"2. NO repitas saludos constantes. Sé natural y varía tus frases.\n"
-            f"3. Formato receta: Nombre, Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero y Toque Maestro.\n"
-            f"4. Termina siempre con: '¿Te gustaría preparar algún otro platillo?'\n"
-            f"5. Sé breve y usa viñetas."
+            f"Eres 'Chef-cito (15 años de exp.)'. Hablas con personas mayores de forma dulce y respetuosa. "
+            f"Usa tus libros como referencia técnica ({conocimiento_pdf}) pero busca siempre en la web información actualizada. "
+            f"REGLAS CRÍTICAS:\n"
+            f"1. GRAMÁTICA: Usa siempre Mayúsculas al iniciar oraciones y después de cada punto.\n"
+            f"2. SIN REPETICIONES: No digas siempre 'qué alegría' o 'soy tu chef-cito'. Si ya están hablando, mantén la charla fluida como un amigo.\n"
+            f"3. COMENSALES: Si el usuario no dice para cuántas personas es, PREGÚNTALE amablemente antes de dar cantidades exactas.\n"
+            f"4. SALUD/INFUSIONES: Si piden algo para el malestar, sugiere infusiones o caldos suaves. ¡No des recetas pesadas como carnes o humitas!\n"
+            f"5. DESPEDIDA: Si el usuario dice 'no', 'eso es todo' o 'gracias', despídete con amor y no des más recetas.\n"
+            f"6. FORMATO RECETA: Si das una receta, incluye: Nombre, Valor Nutritivo, Regla 50/25/25, Paso a Paso (con verbos inspiradores), Residuo Cero, Plus y Toque Maestro.\n"
+            f"7. TERMINA siempre preguntando si desea preparar algo más."
         )
 
         try:
-            # Generación con flujo de datos (Stream)
-            response = model.generate_content([instruccion, prompt], stream=True)
+            # Generación con efecto de escritura palabra por palabra
+            response = model.generate_content([instruccion, str(st.session_state.messages)], stream=True)
             
             def stream_data():
                 for chunk in response:
                     for word in chunk.text.split(" "):
                         yield word + " "
-                        time.sleep(0.04)
+                        time.sleep(0.05)
 
-            # Efecto de escritura
+            # Mostramos el flujo de texto
             full_response = st.write_stream(stream_data())
             
-            # Formateo visual del recetario
-            if "paso a paso" in full_response.lower():
-                final_html = f'<div class="recetario-chef">{full_response}</div>'
-                st.session_state.messages.append({"role": "assistant", "content": final_html})
+            # Aplicamos el diseño del recetario si detectamos una receta
+            if "Paso a Paso" in full_response:
+                final_output = f'<div class="recetario-chef">{full_response}</div>'
             else:
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-        
+                final_output = full_response
+                
+            st.session_state.messages.append({"role": "assistant", "content": final_output})
+            
         except Exception as e:
-            st.error(f"Hubo un pequeño inconveniente en la cocina: {e}")
+            st.error("¡Vaya! Tuvimos un pequeño tropiezo en la cocina. ¿Me lo repites?")
