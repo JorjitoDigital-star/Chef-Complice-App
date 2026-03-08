@@ -4,7 +4,7 @@ from pypdf import PdfReader
 import os
 import time
 
-# 1. INTERFAZ: Letras grandes y legibles
+# 1. INTERFAZ PROFESIONAL (Letras Grandes)
 st.set_page_config(page_title="Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -50,8 +50,8 @@ else:
     st.error("Error: Configure la GOOGLE_API_KEY en los Secrets.")
     st.stop()
 
-# Usamos el nombre de modelo más básico y compatible
-model = genai.GenerativeModel('gemini-1.5-flash')
+# USAMOS GEMINI-PRO PARA EVITAR EL ERROR 404 DEFINITIVAMENTE
+model = genai.GenerativeModel('gemini-pro')
 
 # 4. GESTIÓN DE SESIÓN
 if "messages" not in st.session_state:
@@ -63,25 +63,25 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. LÓGICA DE RESPUESTA BLINDADA
+# 5. LÓGICA DE RESPUESTA
 if prompt := st.chat_input("Escriba su consulta..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Instrucciones inyectadas directamente para evitar el error 404 del sistema
+        # Instrucciones profesionales inyectadas
         instrucciones = (
-            f"Actúa como 'Chefcito', experto culinario con 15 años de trayectoria. Trato formal y respetuoso. "
-            f"PROHIBIDO el uso de lenguaje cursi (mi vida, mi cielo o corazón). "
-            f"Reglas: 1. Gramática perfecta (Mayúsculas iniciales). 2. Si no sabes cuántos comensales son, pregunta primero. "
-            f"3. Referencia técnica: {conocimiento_base}. 4. Formato receta: Nombre, Valor Nutritivo, Regla 50/25/25, "
+            f"Instrucción: Actúa como 'Chefcito', experto culinario (15 años de exp). Trato formal y respetuoso. "
+            f"PROHIBIDO el lenguaje cursi (mi vida, mi cielo o corazón). "
+            f"Reglas: 1. Gramática perfecta (Mayúsculas iniciales). 2. Pregunta siempre cuántos comensales son si no lo dicen. "
+            f"3. Referencia técnica: {conocimiento_base}. 4. Formato: Nombre, Valor Nutritivo, Regla 50/25/25, "
             f"Paso a Paso, Residuo Cero y Toque Maestro. 5. Termina preguntando si hay algo más. "
-            f"A continuación, responde al siguiente mensaje del usuario:\n\n"
+            f"Mensaje del usuario: "
         )
 
         try:
-            # Llamada directa sin constructor de sistema (evita el 404)
+            # Generación estable
             response = model.generate_content(instrucciones + prompt, stream=True)
             
             def stream_text():
@@ -101,5 +101,4 @@ if prompt := st.chat_input("Escriba su consulta..."):
             st.session_state.messages.append({"role": "assistant", "content": output})
             
         except Exception as e:
-            # Si falla el 1.5, intentamos con el Pro por si es un tema de cuota
-            st.error(f"Inconveniente técnico. Estamos ajustando el fogón. (Detalle: {e})")
+            st.error(f"Inconveniente técnico: {e}")
