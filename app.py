@@ -3,20 +3,29 @@ import google.generativeai as genai
 from pypdf import PdfReader
 import os
 
-# 1. Configuración de Estilo y Letras Grandes
+# 1. Configuración de Pantalla y ESTILO VISUAL (Letras Extra Grandes)
 st.set_page_config(page_title="Chef-cito 👨‍🍳", page_icon="👨‍🍳")
 
-# Código para agrandar la letra de los mensajes y del chat
 st.markdown("""
     <style>
-    .stChatMessage {
-        font-size: 22px !important;
+    /* Tamaño de letra para toda la conversación */
+    .stChatMessage, p, li {
+        font-size: 26px !important;
+        line-height: 1.4 !important;
     }
-    .stChatInput textarea {
-        font-size: 22px !important;
+    /* Estilo especial para que el RECETARIO sea aún más grande */
+    .recetario-chef {
+        font-size: 32px !important;
+        font-weight: bold !important;
+        color: #1E1E1E;
+        background-color: #F0F2F6;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 10px solid #FF4B4B;
     }
-    p {
-        font-size: 22px !important;
+    /* Títulos dentro del recetario */
+    .recetario-chef h1, .recetario-chef h2 {
+        font-size: 38px !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -24,7 +33,7 @@ st.markdown("""
 st.title("👨‍🍳 Chef-cito")
 st.markdown("---")
 
-# 2. Carga silenciosa de los libros
+# 2. Carga del conocimiento de tus 6 PDFs
 @st.cache_resource
 def cargar_biblioteca():
     texto_total = ""
@@ -40,51 +49,65 @@ def cargar_biblioteca():
             continue
     return texto_total[:120000]
 
-conocimiento_chef = cargar_biblioteca()
+conocimiento_pdf = cargar_biblioteca()
 
-# 3. Conexión con Gemini
+# 3. Configuración de la IA de Google (Gemini)
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la llave secreta.")
+    st.error("⚠️ Falta la llave secreta en los Secrets de Streamlit.")
     st.stop()
 
+# Usamos el modelo más potente y rápido detectado en tu cuenta
 model = genai.GenerativeModel('models/gemini-flash-latest')
 
-# 4. Diálogo de Chef-cito
+# 4. El Saludo Amistoso de Chef-cito
 if "messages" not in st.session_state:
     st.session_state.messages = []
     saludo = (
         "¡Hola! Soy Chef-cito. 👨‍🍳✨\n\n"
+        "¡Vamos a cocinar rico y sano!\n\n"
         "* ¿De dónde me escribes?\n"
-        "* ¿Cuántas personas van a comer?\n"
-        "* ¿Qué tienes en tu cocina?"
+        "* ¿Cuántos van a comer?\n"
+        "* ¿Qué tienes en tu cocina hoy?"
     )
     st.session_state.messages.append({"role": "assistant", "content": saludo})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. Respuesta Sencilla y Breve
-if prompt := st.chat_input("Escribe aquí..."):
+# 5. Generación de Recetas con Formato Gourmet y Letra Gigante
+if prompt := st.chat_input("Escribe aquí tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Instrucciones para que sea breve y no mencione PDFs
+            # INSTRUCCIÓN MAESTRA: PDF + WEB + FORMATO GOURMET
             system_instruction = (
-                f"Eres 'Chef-cito'. Hablas con personas mayores de forma dulce, breve y simple. "
-                f"Usa viñetas para que se lea fácil. "
-                f"Usa este conocimiento pero NO digas que lo sacaste de un PDF o libro: {conocimiento_chef}. "
-                f"Responde máximo en dos párrafos cortos."
+                f"Eres 'Chef-cito (15 años de exp.)'. Hablas con personas mayores de forma dulce y simple. "
+                f"Usa el conocimiento técnico de estos PDFs: {conocimiento_pdf} Y TAMBIÉN toda la información de la web para mejorar la receta. "
+                f"REGLA DE FORMATO: Debes responder usando EXACTAMENTE esta estructura y envolver todo el recetario en un div con clase 'recetario-chef':\n"
+                f"1. Saludo breve: 'Soy tu Chef-cito 👨‍🍳. vamos a preparar este ícono...'\n"
+                f"2. Nombre del Plato + Autor: Chef-Cito.\n"
+                f"3. Valor Nutritivo 💪.\n"
+                f"4. Proporciones (Regla Nutritiva 50/25/25).\n"
+                f"5. Paso a Paso 🍳 (usa verbos inspiradores como 'Sella la magia').\n"
+                f"6. Residuo Cero.\n"
+                f"7. El Plus del Chef-Cito 💡.\n"
+                f"8. Toque Maestro 🌟.\n"
+                f"IMPORTANTE: No menciones nunca la palabra 'PDF'. Mantén las instrucciones breves y sencillas."
             )
             
             response = model.generate_content([system_instruction, prompt])
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            
+            # Envolvemos la respuesta en el formato de letra extra grande
+            respuesta_formateada = f'<div class="recetario-chef">{response.text}</div>'
+            
+            st.markdown(respuesta_formateada, unsafe_allow_html=True)
+            st.session_state.messages.append({"role": "assistant", "content": respuesta_formateada})
             
         except Exception as e:
-            st.error("¡Ay! Algo pasó en la cocina. Intenta de nuevo.")
+            st.error("¡Ay! Hubo un problema en la cocina. Por favor, intenta de nuevo en unos segundos.")
