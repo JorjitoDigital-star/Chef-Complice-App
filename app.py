@@ -8,30 +8,33 @@ st.set_page_config(page_title="Chef Cómplice 👨‍🍳", page_icon="👨‍�
 st.title("👨‍🍳 Chef Cómplice")
 st.markdown("---")
 
-# 2. LEER TODOS LOS PDFS EN LA CARPETA
+# 2. LEER TODOS LOS PDFS (Con límite de seguridad)
 @st.cache_resource
 def get_all_pdfs_text():
     full_text = ""
-    # Busca todos los archivos que terminen en .pdf
     files = [f for f in os.listdir('.') if f.endswith('.pdf')]
     for file in files:
         try:
             pdf_reader = PdfReader(file)
             for page in pdf_reader.pages:
-                full_text += page.extract_text()
-        except:
-            continue # Si un PDF da error, pasa al siguiente
-    return full_text
+                text = page.extract_text()
+                if text:
+                    full_text += text + "\n"
+        except Exception as e:
+            st.warning(f"No pude leer el archivo {file}: {e}")
+    # Limitamos a 500k caracteres para no saturar el modelo gratuito
+    return full_text[:500000] 
 
 contexto_biblioteca = get_all_pdfs_text()
 
-# 3. Configurar Gemini
+# 3. Configurar Gemini con el nombre de modelo correcto
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
     st.error("Falta la configuración de la API Key en Secrets.")
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Cambiamos el nombre del modelo a la ruta completa por seguridad
+model = genai.GenerativeModel('models/gemini-1.5-flash')
 
 # 4. Lógica del Chat
 if "messages" not in st.session_state:
@@ -48,8 +51,12 @@ if prompt := st.chat_input("Escribe tus ingredientes aquí..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Ahora el Chef usa TODA la biblioteca de PDFs
-        instrucciones_chef = f"Eres el Chef Cómplice. Usa este conocimiento de mis 6 PDFs: {contexto_biblioteca}. Responde de forma creativa, breve y entusiasta."
-        response = model.generate_content([instrucciones_chef, prompt])
-        st.markdown(response.text)
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        try:
+            # Enviamos el contexto de forma separada para mayor claridad
+            instrucciones = f"Eres el Chef Cómplice. Usa este conocimiento: {contexto_biblioteca}"
+            # Llamada al modelo con manejo de errores
+            response = model.generate_content([instrucciones, prompt])
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"Hubo un error al generar la respuesta: {e}")
