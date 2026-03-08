@@ -1,33 +1,65 @@
 import streamlit as st
 import google.generativeai as genai
+from pypdf import PdfReader
+import os
 
-st.set_page_config(page_title="Diagnóstico Chef", page_icon="👨‍🍳")
-st.title("👨‍🍳 Diagnóstico del Chef")
+# 1. Configuración de la interfaz
+st.set_page_config(page_title="Chef Cómplice 👨‍🍳", page_icon="👨‍🍳")
+st.title("👨‍🍳 Chef Cómplice")
+st.markdown("---")
 
-# 1. Verificar la Llave
-if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("❌ No encontré la llave en Secrets.")
+# 2. Cargar Biblioteca de PDFs
+@st.cache_resource
+def cargar_biblioteca():
+    texto_total = ""
+    archivos_pdf = [f for f in os.listdir('.') if f.endswith('.pdf')]
+    for archivo in archivos_pdf:
+        try:
+            lector = PdfReader(archivo)
+            for pagina in lector.pages:
+                extraido = pagina.extract_text()
+                if extraido:
+                    texto_total += extraido + "\n"
+        except:
+            continue
+    return texto_total[:500000] 
+
+conocimiento_chef = cargar_biblioteca()
+
+# 3. Configurar Gemini con el nombre exacto de tu lista
+if "GOOGLE_API_KEY" in st.secrets:
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+else:
+    st.error("Falta la API Key en Secrets.")
     st.stop()
 
-try:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    
-    # 2. Intentamos listar los modelos disponibles para tu cuenta
-    st.write("Buscando modelos compatibles...")
-    modelos = [m.name for m in genai.list_models()]
-    st.success(f"¡Conexión exitosa! Modelos encontrados: {modelos}")
-    
-    # 3. Usamos el primero que funcione de la lista oficial
-    # Si 'gemini-1.5-flash' no está, usará 'gemini-pro'
-    nombre_modelo = 'gemini-1.5-flash' if 'models/gemini-1.5-flash' in modelos else 'gemini-pro'
-    
-    st.info(f"Usando modelo: {nombre_modelo}")
-    model = genai.GenerativeModel(nombre_modelo)
-    
-    # Prueba rápida de respuesta
-    response = model.generate_content("Hola, ¿estás listo?")
-    st.write("Respuesta de prueba:", response.text)
+# USAMOS EL NOMBRE EXACTO DE TU LISTA:
+model = genai.GenerativeModel('models/gemini-flash-latest')
 
-except Exception as e:
-    st.error(f"Error técnico real: {e}")
-    st.warning("Si el error persiste, intenta generar una API KEY NUEVA en Google AI Studio.")
+# 4. Historial del Chat
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    st.session_state.messages.append({"role": "assistant", "content": "¡Hola! Soy tu Chef Cómplice! 👨‍🍳 Mis 6 libros están listos. ¿Qué cocinamos hoy?"})
+
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# 5. Interacción
+if prompt := st.chat_input("Escribe tus ingredientes..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        try:
+            # Instrucción maestra
+            instrucciones = f"Eres el Chef Cómplice. Usa este conocimiento de mis PDFs: {conocimiento_chef}. Sé entusiasta y breve."
+            
+            # Generar respuesta
+            response = model.generate_content([instrucciones, prompt])
+            
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"Error en la cocina: {e}")
