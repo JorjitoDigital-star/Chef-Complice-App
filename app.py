@@ -27,67 +27,63 @@ st.markdown("""
 
 st.title("👨‍🍳 Chefcito")
 
-# 2. CONOCIMIENTO TÉCNICO
+# 2. CARGA DE CONOCIMIENTO (PDFs)
 @st.cache_resource
-def cargar_biblioteca():
+def cargar_conocimiento():
     texto = ""
     archivos = [f for f in os.listdir('.') if f.endswith('.pdf')]
     for arc in archivos:
         try:
             lector = PdfReader(arc)
-            for pag in lector.pages[:15]:
+            for pag in lector.pages[:10]:
                 ext = pag.extract_text()
                 if ext: texto += ext + "\n"
         except: continue
-    return texto[:30000]
+    return texto[:25000]
 
-biblioteca = cargar_biblioteca()
+conocimiento_base = cargar_conocimiento()
 
-# 3. MOTOR DE INTELIGENCIA (Configuración Directa)
+# 3. CONFIGURACIÓN DEL MOTOR
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Error: Falta la API Key en los Secrets.")
+    st.error("Error: Configure la GOOGLE_API_KEY en los Secrets.")
     st.stop()
 
-# Instrucción de Sistema: Profesional y Rigurosa
-instrucciones_chef = (
-    f"Eres 'Chefcito', experto culinario con 15 años de trayectoria. Trato formal, respetuoso y profesional. "
-    f"PROHIBIDO el uso de lenguaje afectivo (mi vida, mi cielo, corazón, etc.). "
-    f"Normas:\n"
-    f"1. GRAMÁTICA: Uso estricto de Mayúsculas al iniciar cada oración y después de puntos.\n"
-    f"2. COMENSALES: Si el usuario no indica para cuántos cocinará, debe solicitar la cantidad antes de dar la receta.\n"
-    f"3. BASE TÉCNICA: Utilice este contexto: {biblioteca}. Complemente con conocimientos actuales.\n"
-    f"4. FORMATO: Nombre, Valor Nutritivo, Regla 50/25/25, Paso a Paso, Residuo Cero, Plus y Toque Maestro.\n"
-    f"5. FINALIZACIÓN: Siempre pregunte si requiere asistencia con otro platillo."
-)
+# USAMOS EL NOMBRE MÁS CORTO Y COMPATIBLE POSIBLE
+# Eliminamos el parámetro 'system_instruction' que es el que causa el error 404
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-model = genai.GenerativeModel(
-    model_name='gemini-1.5-flash',
-    system_instruction=instrucciones_chef
-)
-
-# 4. GESTIÓN DE SESIÓN NATIVA
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = model.start_chat(history=[])
+# 4. GESTIÓN DE SESIÓN
+if "messages" not in st.session_state:
     st.session_state.messages = []
-    bienvenida = "¡Hola! Soy Chefcito. 👨‍🍳✨ Es un gusto saludarle. Por favor, indique desde qué lugar nos escribe y qué desea cocinar hoy."
+    bienvenida = "¡Hola! Soy Chefcito. 👨‍🍳✨ Es un gusto saludarle. Por favor, indique su ubicación y los ingredientes que desea preparar hoy."
     st.session_state.messages.append({"role": "assistant", "content": bienvenida})
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"], unsafe_allow_html=True)
 
-# 5. FLUJO DE DIÁLOGO
+# 5. LÓGICA DE RESPUESTA BLINDADA
 if prompt := st.chat_input("Escriba su consulta..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # Metemos las instrucciones directamente en el mensaje para evitar errores de API
+        instrucciones_contexto = (
+            f"Eres 'Chefcito', experto culinario con 15 años de trayectoria. Trato formal y respetuoso. "
+            f"PROHIBIDO el uso de lenguaje cursi como 'mi vida', 'mi cielo' o 'corazón'. "
+            f"Reglas: 1. Gramática perfecta (Mayúsculas iniciales). 2. Si no sabes cuántos comensales son, pregunta primero. "
+            f"3. Referencia técnica: {conocimiento_base}. 4. Formato receta: Nombre, Valor Nutritivo, Regla 50/25/25, "
+            f"Paso a Paso, Residuo Cero y Toque Maestro. 5. Termina preguntando si hay algo más.\n\n"
+            f"Responde a esto: "
+        )
+
         try:
-            # Respuesta fluida como en AI Studio
-            response = st.session_state.chat_session.send_message(prompt, stream=True)
+            # Llamada directa al contenido (sin historial complejo para evitar saturación)
+            response = model.generate_content(instrucciones_contexto + prompt, stream=True)
             
             def stream_text():
                 for chunk in response:
@@ -106,4 +102,4 @@ if prompt := st.chat_input("Escriba su consulta..."):
             st.session_state.messages.append({"role": "assistant", "content": output})
             
         except Exception as e:
-            st.error(f"Se produjo un inconveniente técnico. Detalles: {e}")
+            st.error(f"Inconveniente técnico detectado. Detalles: {e}")
