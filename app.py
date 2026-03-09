@@ -1,29 +1,33 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. ESTILO VISUAL (24px para lectura cómoda en móviles)
+# 1. ESTILO Y CONFIGURACIÓN (24px para tu comodidad)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 st.markdown("<style>.stChatMessage, p, li { font-size: 24px !important; line-height: 1.5; }</style>", unsafe_allow_html=True)
 
 st.title("👨‍🍳 Tu Chefcito")
 
-# 2. CONFIGURACIÓN MAESTRA (Forzando la Versión Estable)
+# 2. EL AJUSTE EXPERTO (Aquí está la magia)
 if "GOOGLE_API_KEY" in st.secrets:
-    # El transporte 'rest' es el más estable para validar créditos en Google Cloud
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"], transport='rest')
+    # Forzamos la versión 'v1' mediante client_options para evitar el error 404 de v1beta
+    genai.configure(
+        api_key=st.secrets["GOOGLE_API_KEY"], 
+        transport='rest',
+        client_options={'api_version': 'v1'} # <-- ESTA ES LA SOLUCIÓN DEFINITIVA
+    )
 else:
     st.error("Falta la API Key en los Secrets.")
     st.stop()
 
-# Usamos el nombre del modelo sin prefijos para que la versión 0.8.3 use 'v1' automáticamente
+# Usamos el nombre del modelo estándar
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 3. GESTIÓN DEL CHAT
+# 3. INTERFAZ DE CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Saludo guía solicitado para [país], [ingredientes] y [comensales]
+    # Saludo guía que diseñamos
     bienvenida = (
-        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para ayudarte hoy en **Perú**, dime:\n\n"
+        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para cocinar algo increíble hoy en **Perú**, dime:\n\n"
         "* ¿En qué **país o región** estás?\n"
         "* ¿Qué **ingredientes** tienes?\n"
         "* ¿Para **cuántos comensales** cocinamos?"
@@ -34,31 +38,31 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 4. LÓGICA DE RESPUESTA (Sin streaming para asegurar estabilidad)
-if prompt := st.chat_input("Dime qué tienes en la cocina..."):
+# 4. PROCESAMIENTO DE RECETA
+if prompt := st.chat_input("Tengo arroz, papas y pollo..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Instrucciones Maestras FUSIONADAS
         instrucciones = (
-            "Eres 'Tu Chefcito', experto en cocina peruana y del mundo. Habla en PRIMERA PERSONA.\n\n"
+            "Eres 'Tu Chefcito'. Responde siempre en PRIMERA PERSONA.\n\n"
             "REGLAS:\n"
             "* Usa viñetas para cada párrafo o paso.\n"
-            "* FUSIONA en un solo bloque breve: El equilibrio 50/25/25 y el valor nutricional.\n"
-            "* PASOS: Breves y sensoriales (menciona aromas y texturas).\n"
-            "* GRAMÁTICA: Fluidez total, sin palabras cortadas ni espacios extra.\n"
-            "* CIERRE: Finaliza siempre con: '¿Desea que le asista con algún otro platillo?'."
+            "* FUSIONA en un solo bloque: Valor nutricional y el equilibrio 50/25/25.\n"
+            "* PASOS: Sé breve, describe aromas y texturas.\n"
+            "* CIERRE: '¿Desea que le asista con algún otro platillo?'."
         )
         
         try:
-            # Llamada a la API estable (v1)
+            # Llamada directa (ahora irá por v1 gracias al configure)
             response = model.generate_content(instrucciones + prompt)
-            texto_final = response.text
             
-            st.markdown(texto_final)
-            st.session_state.messages.append({"role": "assistant", "content": texto_final})
-            
+            if response.text:
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            else:
+                st.warning("El chef se quedó pensativo. Intenta reformular tu lista de ingredientes.")
+                
         except Exception as e:
-            st.error(f"¡Chispazo! Google está validando tus créditos. Intenta en un momento. (Error: {e})")
+            st.error(f"Error de conexión: {e}. Verifica que tu API Key sea del proyecto 'Mi primer proyecto'.")
