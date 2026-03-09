@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 import time
 
-# 1. ESTILO VISUAL: Maximizado para móviles (24px)
+# 1. ESTILO VISUAL: Maximizado para lectura cómoda (24px)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -24,14 +24,14 @@ st.markdown("""
 
 st.title("👨‍🍳 Tu Chefcito")
 
-# 2. CONFIGURACIÓN DE SEGURIDAD Y MOTOR
+# 2. CONFIGURACIÓN MAESTRA DE CONEXIÓN (El "Puente" Directo)
 if "GOOGLE_API_KEY" in st.secrets:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    # AGREGAMOS transport='rest' para forzar la conexión estable y evitar el error v1beta
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"], transport='rest')
 else:
-    st.error("Falta la API Key en los Secrets.")
+    st.error("Falta la API Key en los Secrets de Streamlit.")
     st.stop()
 
-# Ajuste para evitar bloqueos por palabras de cocina
 safety_settings = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
@@ -41,9 +41,9 @@ safety_settings = [
 
 @st.cache_resource
 def configurar_modelo():
-    # Usamos el nombre de modelo estable para evitar el error 404
+    # Usamos el nombre base del modelo para mayor compatibilidad con la cuota de pago
     return genai.GenerativeModel(
-        model_name='gemini-1.5-flash-latest',
+        model_name='gemini-1.5-flash',
         safety_settings=safety_settings
     )
 
@@ -52,12 +52,11 @@ model = configurar_modelo()
 # 3. GESTIÓN DE LA CONVERSACIÓN
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Saludo guía solicitado
     bienvenida = (
-        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para cocinar algo increíble, dime:\n\n"
-        "* ¿En qué **país o región** estás?\n"
-        "* ¿Qué **ingredientes** tienes?\n"
-        "* ¿Para **cuántos comensales** cocinamos?"
+        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para cocinar algo increíble hoy en **Perú** o donde estés, dime:\n\n"
+        "* ¿En qué **país o región** te encuentras?\n"
+        "* ¿Qué **ingredientes** tienes a la mano?\n"
+        "* ¿Para **cuántos comensales** vamos a cocinar?"
     )
     st.session_state.messages.append({"role": "assistant", "content": bienvenida})
 
@@ -65,23 +64,22 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"], unsafe_allow_html=True)
 
-# 4. INTELIGENCIA CULINARIA
+# 4. LÓGICA DE RESPUESTA
 if prompt := st.chat_input("Dime tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Instrucciones para la IA
+        # INSTRUCCIONES DEL CHEF
         instrucciones = (
-            "Eres 'Tu Chefcito'. Responde siempre en PRIMERA PERSONA.\n\n"
+            "Eres 'Tu Chefcito'. Habla en PRIMERA PERSONA.\n\n"
             "REGLAS:\n"
-            "* Usa viñetas para cada párrafo o paso.\n"
-            "* FUSIONA Nutrición y Balance 50/25/25 en una sola sección muy breve.\n"
-            "* PASOS: Sé específico pero sensorial (olores, texturas). Máximo 2 líneas por paso.\n"
-            "* GRAMÁTICA: No separes palabras. Escribe con fluidez natural.\n"
-            "* CIERRE: Pregunta: '¿Desea que le asista con algún otro platillo?'.\n"
-            "* DESPEDIDA: Si terminan, despídete con calidez profesional."
+            "* Usa viñetas para organizar los párrafos y listas.\n"
+            "* FUSIONA Nutrición y Balance 50/25/25 en una sola sección minimalista.\n"
+            "* PASOS: Breves y sensoriales. Describe aromas y texturas.\n"
+            "* GRAMÁTICA: Escribe con fluidez natural. NUNCA separes sílabas con espacios.\n"
+            "* CIERRE: Finaliza con: '¿Desea que le asista con algún otro platillo?'.\n"
         )
         
         try:
@@ -91,17 +89,17 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
                 historial_google.append({"role": rol, "parts": [m["content"]]})
 
             chat = model.start_chat(history=historial_google)
-            # Forzamos la respuesta para evitar problemas de versión v1beta
             response = chat.send_message(instrucciones + prompt, stream=True)
             
             def stream_data():
                 for chunk in response:
                     if chunk.text:
-                        yield chunk.text.replace("  ", " ")
+                        yield chunk.text
                         time.sleep(0.01)
 
             full_text = st.write_stream(stream_data())
             
+            # Formato visual para recetas
             if "Equilibrio" in full_text:
                 output = f'<div class="recetario-chef">{full_text}</div>'
             else:
@@ -110,4 +108,4 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             st.session_state.messages.append({"role": "assistant", "content": output})
             
         except Exception as e:
-            st.error(f"¡Chispazo en el fogón! Intenta de nuevo. (Error: {e})")
+            st.error(f"¡Vaya chispazo! Revisa si la 'Generative Language API' está activa en tu consola. (Error: {e})")
