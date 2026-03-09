@@ -1,36 +1,39 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. ESTILO Y CONFIGURACIÓN (24px para tu comodidad)
+# 1. CONFIGURACIÓN VISUAL (24px para lectura clara en móviles)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
-st.markdown("<style>.stChatMessage, p, li { font-size: 24px !important; line-height: 1.5; }</style>", unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    .stChatMessage, p, li, div {
+        font-size: 24px !important;
+        line-height: 1.6 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Tu Chefcito")
 
-# 2. EL AJUSTE EXPERTO (Aquí está la magia)
+# 2. CONEXIÓN ESTABLE (Corregido para evitar ValueError)
 if "GOOGLE_API_KEY" in st.secrets:
-    # Forzamos la versión 'v1' mediante client_options para evitar el error 404 de v1beta
-    genai.configure(
-        api_key=st.secrets["GOOGLE_API_KEY"], 
-        transport='rest',
-        client_options={'api_version': 'v1'} # <-- ESTA ES LA SOLUCIÓN DEFINITIVA
-    )
+    # Usamos la configuración estándar que reconoce créditos automáticamente
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"], transport='rest')
 else:
-    st.error("Falta la API Key en los Secrets.")
+    st.error("Error: Configura la GOOGLE_API_KEY en los Secrets.")
     st.stop()
 
-# Usamos el nombre del modelo estándar
+# Definición del modelo de producción
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 3. INTERFAZ DE CHAT
+# 3. GESTIÓN DE LA CONVERSACIÓN
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Saludo guía que diseñamos
+    # Mensaje de presentación guía solicitado
     bienvenida = (
-        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para cocinar algo increíble hoy en **Perú**, dime:\n\n"
+        "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Para ayudarte mejor, dime:\n\n"
         "* ¿En qué **país o región** estás?\n"
         "* ¿Qué **ingredientes** tienes?\n"
-        "* ¿Para **cuántos comensales** cocinamos?"
+        "* ¿Para **cuántos comensales** cocinamos hoy?"
     )
     st.session_state.messages.append({"role": "assistant", "content": bienvenida})
 
@@ -38,31 +41,31 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 4. PROCESAMIENTO DE RECETA
+# 4. LÓGICA DE RESPUESTA MAESTRA
 if prompt := st.chat_input("Tengo arroz, papas y pollo..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # Instrucciones de comportamiento y estilo
         instrucciones = (
-            "Eres 'Tu Chefcito'. Responde siempre en PRIMERA PERSONA.\n\n"
-            "REGLAS:\n"
-            "* Usa viñetas para cada párrafo o paso.\n"
-            "* FUSIONA en un solo bloque: Valor nutricional y el equilibrio 50/25/25.\n"
-            "* PASOS: Sé breve, describe aromas y texturas.\n"
-            "* CIERRE: '¿Desea que le asista con algún otro platillo?'."
+            "Eres 'Tu Chefcito'. Habla siempre en PRIMERA PERSONA ('Yo te sugiero', 'Te ayudo').\n\n"
+            "REGLAS CRÍTICAS:\n"
+            "* Usa viñetas para cada párrafo y lista de pasos.\n"
+            "* COMBINA en un solo bloque breve: El equilibrio 50/25/25 y la información nutricional.\n"
+            "* PASOS: Sé breve y usa lenguaje sensorial (aromas, texturas, colores).\n"
+            "* GRAMÁTICA: Escribe con fluidez natural, sin separar palabras por error.\n"
+            "* CIERRE: Finaliza con: '¿Desea que le asista con algún otro platillo?'."
         )
         
         try:
-            # Llamada directa (ahora irá por v1 gracias al configure)
+            # Generación sin streaming para máxima estabilidad en la red
             response = model.generate_content(instrucciones + prompt)
+            respuesta_texto = response.text
             
-            if response.text:
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-            else:
-                st.warning("El chef se quedó pensativo. Intenta reformular tu lista de ingredientes.")
-                
+            st.markdown(respuesta_texto)
+            st.session_state.messages.append({"role": "assistant", "content": respuesta_texto})
+            
         except Exception as e:
-            st.error(f"Error de conexión: {e}. Verifica que tu API Key sea del proyecto 'Mi primer proyecto'.")
+            st.error(f"¡Chispazo! Google está terminando de vincular tus créditos. Intenta de nuevo en un minuto. (Error: {e})")
