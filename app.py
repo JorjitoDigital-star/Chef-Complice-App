@@ -1,24 +1,29 @@
 import streamlit as st
 import google.generativeai as genai
-# Forzamos la importación del cliente de producción (v1)
-from google.generativeai import v1 as genai_v1
 
-# 1. ESTILO VISUAL (24px para tu comodidad)
+# 1. ESTILO VISUAL: 24px para tu comodidad
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
-st.markdown("<style>.stChatMessage, p, li { font-size: 24px !important; line-height: 1.5; }</style>", unsafe_allow_html=True)
+st.markdown("""
+    <style>
+    .stChatMessage, p, li, div {
+        font-size: 24px !important;
+        line-height: 1.6 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 st.title("👨‍🍳 Tu Chefcito")
 
-# 2. CONEXIÓN FORZADA A PRODUCCIÓN (v1)
+# 2. CONEXIÓN ESTÁNDAR (La forma oficial)
 if "GOOGLE_API_KEY" in st.secrets:
-    # Usamos genai_v1 para asegurar que no toque la puerta de 'v1beta'
-    genai_v1.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    # No forzamos transporte ni versiones extrañas
+    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
     st.error("Configura la nueva API Key en los Secrets.")
     st.stop()
 
-# Inicializamos el modelo usando el cliente de producción
-model = genai_v1.GenerativeModel('gemini-1.5-flash')
+# Usamos el nombre del modelo sin rutas largas
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # 3. GESTIÓN DEL CHAT
 if "messages" not in st.session_state:
@@ -48,7 +53,7 @@ if prompt := st.chat_input("Tengo arroz, pollo y papas..."):
         )
         
         try:
-            # Llamada directa al motor estable
+            # Petición directa al grano
             response = model.generate_content(instrucciones + prompt)
             
             if response.text:
@@ -56,4 +61,5 @@ if prompt := st.chat_input("Tengo arroz, pollo y papas..."):
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
             
         except Exception as e:
-            st.error(f"Error técnico: {e}. Intenta refrescar la página.")
+            # Este mensaje te dirá si sigue intentando usar v1beta
+            st.error(f"Error técnico detectado: {e}")
