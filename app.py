@@ -43,7 +43,7 @@ safety_settings = [
 def configurar_modelo():
     # Usamos el nombre de modelo estable para evitar el error 404
     return genai.GenerativeModel(
-        model_name='gemini-1.5-flash',
+        model_name='gemini-1.5-flash-latest',
         safety_settings=safety_settings
     )
 
