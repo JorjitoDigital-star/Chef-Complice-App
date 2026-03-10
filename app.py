@@ -22,8 +22,8 @@ else:
     st.error("Error: Configura la nueva GOOGLE_API_KEY en los Secrets.")
     st.stop()
 
-# Usamos 1.5-flash para confirmar que la restricción de pago se activó
-model = genai.GenerativeModel('gemini-1.5-flash')
+# Usamos 2.5-flash para confirmar que la restricción de pago se activó
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # 3. PROMPT MAESTRO (Instrucciones de Personalidad y Lógica)
 instrucciones_maestras = (
