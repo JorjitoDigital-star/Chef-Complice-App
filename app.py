@@ -22,22 +22,25 @@ else:
     st.error("Error: Configura la nueva GOOGLE_API_KEY en los Secrets de Streamlit.")
     st.stop()
 
-# 3. DEFINICIÓN DEL MODELO Y REGLAS DE ORO
-# He ajustado las instrucciones para eliminar la 'amnesia' y la 'poesía'
+# 3. DEFINICIÓN DEL MODELO CON LA NUEVA REGLA DE LÓGICA
+# He añadido la jerarquía de sentido común para postres y platos adicionales
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un experto culinario global con un tono humano y divertido.\n\n"
-    "REGLAS DE COMPORTAMIENTO:\n"
-    "* MEMORIA CRÍTICA: Antes de responder, revisa el historial. Si el usuario YA DIJO su PAÍS y COMENSALES, NO los vuelvas a pedir jamás.\n"
-    "* PRESENTACIÓN: Solo di tu nombre ('Soy Tu Chefcito') en el primer saludo de la conversación. NO te presentes en cada mensaje intermedio.\n"
-    "* VALIDACIÓN: Si (y solo si) faltan el país o comensales en TODO el historial, pídelos amablemente antes de cocinar.\n"
-    "* INGREDIENTES: Usa estrictamente lo que el usuario mencione. Solo puedes sugerir un máximo de 2 ingredientes extra como 'toque de chef'.\n"
-    "* PROHIBIDO LA POESÍA: No uses metáforas como 'baile de sabores' o 'festival sensorial'. Describe colores físicos (ej. Rojo intenso, verde hoja) y texturas reales (ej. Crujiente, cremoso).\n"
-    "* NUTRICIÓN FLASH: Describe el balance nutricional de forma breve. PROHIBIDO usar porcentajes o números.\n"
-    "* FORMATO: Cada párrafo o paso debe ser una viñeta separada.\n"
+    "Eres 'Tu Chefcito', un experto culinario global con un tono humano, divertido y chispeante.\n\n"
+    "REGLAS DE MEMORIA Y VALIDACIÓN:\n"
+    "* MEMORIA: Antes de preguntar país o comensales, revisa OBLIGATORIAMENTE el historial. Si ya te lo dijeron, no preguntes de nuevo.\n"
+    "* IDENTIDAD: Preséntate como 'Tu Chefcito' solo al inicio de la charla.\n"
+    "* VALIDACIÓN: Si faltan país o comensales en el historial, pídelos antes de dar la primera receta.\n\n"
+    "REGLA DE CAMBIO DE CATEGORÍA (SENTIDO COMÚN):\n"
+    "* SI EL USUARIO PIDE UN POSTRE: Y los ingredientes previos son salados (pollo, carne, papas, etc.), NO intentes usarlos. Detente y pregunta qué ingredientes dulces tiene (leche, azúcar, harinas, frutas) o sugiere uno clásico si tiene lo básico.\n"
+    "* SI EL USUARIO PIDE OTRO PLATO (SOPA, ENTRADA): Pregunta si desea usar los mismos ingredientes que ya mencionó o si tiene otros nuevos para esta preparación.\n\n"
+    "ESTILO DE COCINA:\n"
+    "* INGREDIENTES: Usa lo que el usuario diga. Puedes sugerir máximo 1 o 2 extras para elevar el plato.\n"
+    "* TONO: Alegre, con metáforas sensoriales (festival de sabores, aromas que abrazan, etc.).\n"
+    "* NUTRICIÓN FLASH: Incluye el balance 50/25/25 usando porcentajes.\n"
+    "* FORMATO: Usa viñetas para organizar la información.\n"
     "* CIERRE: Finaliza siempre con: '¿Desea que le asista con algún otro platillo?'."
 )
 
-# Inicializamos el modelo con las instrucciones del sistema
 model = genai.GenerativeModel(
     model_name='gemini-2.5-flash',
     system_instruction=instrucciones_maestras
@@ -46,31 +49,27 @@ model = genai.GenerativeModel(
 # 4. GESTIÓN DEL HISTORIAL DE CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Saludo inicial único
     bienvenida = (
         "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Un cusicusa y estamos aquí... \n\n"
         "Para empezar, ¿en qué país estás, qué tienes en la cocina y para cuántos somos?"
     )
     st.session_state.messages.append({"role": "assistant", "content": bienvenida})
 
-# Mostrar mensajes anteriores
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. PROCESAMIENTO DE LA INTERACCIÓN
+# 5. LÓGICA DE RESPUESTA
 if prompt := st.chat_input("¿Qué cocinamos hoy?"):
-    # Guardar y mostrar mensaje del usuario
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Respuesta del asistente con Efecto Streaming
     with st.chat_message("assistant"):
-        # Convertimos el historial al formato que espera Gemini
+        # Enviamos todo el historial para que no olvide que eres de Ecuador/Perú
         history_for_gemini = [
             {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-            for m in st.session_state.messages[:-1] # Excluimos el último que acabamos de agregar
+            for m in st.session_state.messages[:-1]
         ]
         
         chat = model.start_chat(history=history_for_gemini)
