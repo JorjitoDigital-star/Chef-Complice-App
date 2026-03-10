@@ -3,17 +3,25 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO DE INTERFAZ MÓVIL (Logo centrado y 24px)
+# 1. DISEÑO VISUAL ACCESIBLE (Todo a 24px y Centrado)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* Lectura cómoda en móviles: 24px */
+    /* 1. Fuente de mensajes y textos generales */
     .stChatMessage, p, li, div, span {
         font-size: 24px !important;
         line-height: 1.3 !important;
     }
-    /* Cabecera centrada y limpia */
+    
+    /* 2. FUENTE DE LA CAJETILLA DE ENTRADA (Input) */
+    /* Ajustamos el área de texto y el marcador de posición (placeholder) */
+    .stChatInput textarea {
+        font-size: 24px !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* 3. Cabecera centrada y grande para identidad visual */
     .header-container {
         text-align: center;
         margin-bottom: 25px;
@@ -21,10 +29,10 @@ st.markdown("""
     .chef-icon { font-size: 85px !important; }
     .chef-title { font-size: 50px !important; font-weight: bold; margin-top: -10px; }
     
-    /* Numeración pegada a la izquierda para ganar espacio lateral */
+    /* 4. Numeración pegada a la izquierda para ganar ancho en móvil */
     ol { padding-left: 25px !important; } 
     
-    /* Botón de WhatsApp estilizado */
+    /* 5. Estilo del botón WhatsApp */
     .whatsapp-btn {
         display: inline-block;
         padding: 14px 25px;
@@ -38,6 +46,7 @@ st.markdown("""
         text-align: center;
     }
     </style>
+    
     <div class="header-container">
         <div class="chef-icon">👨‍🍳</div>
         <div class="chef-title">Tu Chefcito</div>
@@ -48,7 +57,7 @@ st.markdown("""
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la API KEY en Secrets de Streamlit.")
+    st.error("Falta la API KEY en los Secrets.")
     st.stop()
 
 # 3. EL CEREBRO DE TU CHEFCITO (Amable, Táctico y con Memoria)
@@ -59,13 +68,13 @@ instrucciones_maestras = (
     "* Sé táctico y sintético: Ve al grano amablemente para evitar scroll excesivo.\n"
     "* Pasos: Máximo 15 palabras por cada número.\n\n"
     "REGLAS DE LÓGICA Y MEMORIA:\n"
-    "* Memoria: Revisa el historial. Si ya sabes el país y comensales, NO los vuelvas a pedir.\n"
-    "* Sentido Común: Si piden postre y solo hay ingredientes salados, detente y pide ingredientes dulces.\n"
+    "* Memoria: Si ya sabes el país y comensales por el historial, NO los pidas de nuevo.\n"
+    "* Sentido Común: Si piden postre y solo hay cosas saladas, detente y pide ingredientes dulces.\n"
     "* Tip de Oro: Comparte solo UN tip profesional de experiencia por cada receta.\n"
     "* Nutrición: Breve descripción adjetivada. PROHIBIDO usar números o el símbolo (%).\n\n"
     "IDENTIDAD Y CIERRE:\n"
-    "* Inicio: '¡Hola! Soy Tu Chefcito 👨+🍳. Un cusicusa y estamos aquí...'. Solo al empezar.\n"
-    "* Despedida: Si el usuario termina, responde con gentileza: '¡Fue un placer! Llámame cuando me necesites. Un cusicusa y estamos aquí'. No preguntes nada más."
+    "* Inicio: '¡Hola! Soy Tu Chefcito 👨‍🍳. Un cusicusa y estamos aquí...'. Solo al empezar.\n"
+    "* Despedida: Si el usuario termina, responde con cariño: '¡Fue un placer! Llámame cuando me necesites. Un cusicusa y estamos aquí'. No preguntes nada más."
 )
 
 model = genai.GenerativeModel(
@@ -73,7 +82,7 @@ model = genai.GenerativeModel(
     system_instruction=instrucciones_maestras
 )
 
-# 4. GESTIÓN DE CHAT CON MEMORIA
+# 4. GESTIÓN DE CHAT
 if "messages" not in st.session_state:
     st.session_state.messages = []
     bienvenida = "¡Hola! Soy **Tu Chefcito** 👨‍🍳. Un cusicusa y estamos aquí... \n\n¿En qué país estás, qué ingredientes tienes y para cuántos cocinamos?"
