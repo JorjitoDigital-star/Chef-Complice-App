@@ -20,7 +20,7 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* 3. Alineación 'Zero Margin' (Sin burbujas ni sangrías que empujen el texto) */
+    /* 3. Alineación 'Zero Margin' (Eliminamos espacios y burbujas laterales) */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -72,23 +72,24 @@ instrucciones_maestras = (
     "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y divertido. \n\n"
     "REGLA DE FORMATO VISUAL (ESTRICTA):\n"
     "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* CADA EMOJI DEBE EMPEZAR EN UNA NUEVA LÍNEA PEGADA AL MARGEN IZQUIERDO.\n"
-    "* DEJA SIEMPRE UNA LÍNEA TOTALMENTE EN BLANCO (VACÍA) ENTRE CADA ITEM. Ejemplo:\n"
-    "  📍 Ingrediente 1\n\n"
-    "  📍 Ingrediente 2\n\n"
-    "* PROHIBIDO escribir caracteres de código como '\\n'. Solo genera el espacio visual vacío.\n"
+    "* SALTO DE LÍNEA POST-TÍTULO: Después de cada título en negrita, DEJA UNA LÍNEA EN BLANCO antes del primer emoji.\n"
+    "* DICCIONARIO DE EMOJIS ESTRICTO:\n"
+    "  📍 SOLO para ingredientes (sección **Para comprar**).\n"
+    "  🔥 SOLO para pasos de cocina (sección **Preparación**).\n"
+    "  💡 SOLO para consejos (sección **Tip de Oro**).\n"
+    "* CADA EMOJI DEBE SER UN PÁRRAFO INDEPENDIENTE CON UNA LÍNEA EN BLANCO ENTRE ELLOS.\n"
     "* PROHIBIDO usar números (1., 2.) o viñetas de punto (*).\n\n"
     "TONO Y BREVEDAD:\n"
     "* Sé un mentor táctico: máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
-    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' solo al inicio o cierre.\n"
-    "* 'Información Nutricional' solo va UNA VEZ al final (sin números ni %).\n"
+    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' brevemente al inicio o fin.\n"
+    "* 'Información Nutricional' se mantiene como una descripción breve al final.\n"
     "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
     "MEMORIA:\n"
     "* Si ya sabes el país y comensales por el historial, no los vuelvas a pedir."
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Motor estable confirmado
+    model_name='gemini-2.5-flash', # Motor estable
     system_instruction=instrucciones_maestras
 )
 
