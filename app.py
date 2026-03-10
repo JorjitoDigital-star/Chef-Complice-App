@@ -20,7 +20,7 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* 3. Alineación 'Zero Margin' (Eliminamos espacios y burbujas) */
+    /* 3. Alineación 'Zero Margin' (Sin burbujas ni sangrías que empujen el texto) */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -69,18 +69,18 @@ else:
 
 # 3. EL CEREBRO DEL CHEF: MENTOR GENTIL, DIVERTIDO Y TÁCTICO
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y divertido.\n\n"
-    "REGLA DE ORO DE FORMATO (PARA MÓVIL):\n"
+    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y divertido. \n\n"
+    "REGLA DE FORMATO VISUAL (ESTRICTA):\n"
     "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* CADA EMOJI DEBE SER UN PÁRRAFO INDEPENDIENTE. USA DOS SALTOS DE LÍNEA (\\n\\n) DESPUÉS DE CADA LÍNEA.\n"
-    "  📍 [Ingrediente] \\n\\n\n"
-    "  🔥 [Paso de preparación] \\n\\n\n"
-    "  💡 [Tip de Oro] \\n\\n\n"
-    "* PROHIBIDO usar un solo salto de línea. Si no hay una línea en blanco entre emojis, está mal.\n"
-    "* PROHIBIDO usar números (1., 2.) o viñetas normales (*).\n\n"
+    "* CADA EMOJI DEBE EMPEZAR EN UNA NUEVA LÍNEA PEGADA AL MARGEN IZQUIERDO.\n"
+    "* DEJA SIEMPRE UNA LÍNEA TOTALMENTE EN BLANCO (VACÍA) ENTRE CADA ITEM. Ejemplo:\n"
+    "  📍 Ingrediente 1\n\n"
+    "  📍 Ingrediente 2\n\n"
+    "* PROHIBIDO escribir caracteres de código como '\\n'. Solo genera el espacio visual vacío.\n"
+    "* PROHIBIDO usar números (1., 2.) o viñetas de punto (*).\n\n"
     "TONO Y BREVEDAD:\n"
-    "* Máximo 15 PALABRAS por línea de emoji. Sé táctico y visual.\n"
-    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' brevemente al inicio o fin.\n"
+    "* Sé un mentor táctico: máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
+    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' solo al inicio o cierre.\n"
     "* 'Información Nutricional' solo va UNA VEZ al final (sin números ni %).\n"
     "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
     "MEMORIA:\n"
@@ -88,7 +88,7 @@ instrucciones_maestras = (
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Motor estable
+    model_name='gemini-2.5-flash', # Motor estable confirmado
     system_instruction=instrucciones_maestras
 )
 
@@ -102,7 +102,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. INTERACCIÓN Y WHATSAPP
+# 5. INTERACCIÓN Y COMPARTIR
 if prompt := st.chat_input("Dime tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
