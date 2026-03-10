@@ -3,7 +3,7 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL PROFESIONAL (24px, Alineación Izquierda Total y Zero Margins)
+# 1. DISEÑO VISUAL PROFESIONAL (Logo, 24px y Alineación Izquierda)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -20,7 +20,7 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* 3. Alineación 'Zero Margin' (Eliminamos burbujas y sangrías laterales) */
+    /* 3. Alineación 'Zero Margin' (Texto pegado a la izquierda) */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -31,15 +31,22 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* 4. Cabecera centrada e identidad visual */
+    /* 4. Cabecera centrada para el logo */
     .header-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
         margin-bottom: 20px;
     }
-    .chef-icon { font-size: 80px !important; }
-    .chef-title { font-size: 45px !important; font-weight: bold; margin-top: -10px; }
+    .chef-title { 
+        font-size: 45px !important; 
+        font-weight: bold; 
+        margin-top: 10px; 
+    }
     
-    /* 5. Estilo del botón WhatsApp */
+    /* 5. Botón WhatsApp sofisticado */
     .whatsapp-btn {
         display: inline-block;
         padding: 14px 25px;
@@ -53,12 +60,15 @@ st.markdown("""
         text-align: center;
     }
     </style>
-    
-    <div class="header-container">
-        <div class="chef-icon">👨‍🍳</div>
-        <div class="chef-title">Tu Chefcito</div>
-    </div>
     """, unsafe_allow_html=True)
+
+# Renderizado de Cabecera con tu Logo de 2000px (ajustado visualmente)
+st.markdown('<div class="header-container">', unsafe_allow_html=True)
+try:
+    st.image("logo.png", width=250) # Ajuste de tamaño para móvil/web
+except:
+    st.warning("⚠️ No se encontró el archivo 'logo.png'. Súbelo a GitHub para verlo.")
+st.markdown('<div class="chef-title">Tu Chefcito</div></div>', unsafe_allow_html=True)
 
 # 2. CONEXIÓN API
 if "GOOGLE_API_KEY" in st.secrets:
@@ -75,24 +85,24 @@ instrucciones_maestras = (
     "* Si el usuario te da las gracias, responde: 'De nada' o 'Con todo gusto, cocinero(a)'.\n\n"
     "REGLA DE FORMATO VISUAL (ESTRICTA):\n"
     "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* SALTO DE LÍNEA POST-TÍTULO: Tras escribir el título en negrita, DEJA UNA LÍNEA EN BLANCO antes del primer emoji.\n"
+    "* SALTO DE LÍNEA POST-TÍTULO: Tras el título en negrita, DEJA UNA LÍNEA EN BLANCO antes del primer emoji.\n"
     "* DICCIONARIO DE EMOJIS ESTRICTO:\n"
     "  📍 SOLO para ingredientes (en **Para comprar**).\n"
     "  🔥 SOLO para pasos de cocina (en **Preparación**).\n"
     "  💡 SOLO para consejos (en **Tip de Oro**).\n"
     "* CADA EMOJI DEBE SER UN PÁRRAFO INDEPENDIENTE CON UNA LÍNEA EN BLANCO ENTRE ELLOS.\n"
-    "* PROHIBIDO usar números, puntos seguidos para separar ítems o viñetas (*).\n\n"
+    "* PROHIBIDO usar números o viñetas normales (*).\n\n"
     "TONO Y BREVEDAD:\n"
-    "* Máximo 15 PALABRAS por cada línea de emoji. Sé táctico.\n"
-    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' al inicio o fin.\n"
-    "* 'Información Nutricional' se mantiene como una descripción breve al final.\n"
-    "* Cierre único e invariable: 'Un cusicusa y estamos aquí'.\n\n"
+    "* Máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
+    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' brevemente.\n"
+    "* 'Información Nutricional' se mantiene como descripción breve al final.\n"
+    "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
     "MEMORIA:\n"
     "* Si ya sabes el país y comensales por el historial, no los vuelvas a pedir."
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Motor estable
+    model_name='gemini-2.5-flash', # Tu motor estable
     system_instruction=instrucciones_maestras
 )
 
