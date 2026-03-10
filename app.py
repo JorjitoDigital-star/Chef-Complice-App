@@ -137,5 +137,10 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             placeholder.markdown(full_text)
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             
-            # Botón de WhatsApp
-            text_for_url = urllib.parse.quote(full_text
+            # Botón de WhatsApp (CORREGIDO: Paréntesis cerrado correctamente)
+            text_for_url = urllib.parse.quote(full_text)
+            whatsapp_html = f'<a href="https://wa.me/?text={text_for_url}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>'
+            st.markdown(whatsapp_html, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Error: {e}")
