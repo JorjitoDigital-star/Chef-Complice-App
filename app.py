@@ -3,7 +3,7 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL PREMIUM (24px, Alineación Izquierda y Logo)
+# 1. DISEÑO VISUAL PREMIUM (24px, Alineación Izquierda y Logo de 2000px)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -31,7 +31,7 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* 4. Cabecera centrada para el logo */
+    /* 4. Cabecera centrada para el logo (Sin texto repetido) */
     .header-container {
         display: flex;
         flex-direction: column;
@@ -57,36 +57,25 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Renderizado de Cabecera: Solo el Logo
+# Renderizado de Cabecera: Solo el Logo de 2000px
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
 try:
+    # Ajustamos el logo a un ancho elegante de 250px
     st.image("logo.png", width=250) 
 except:
-    st.warning("⚠️ Sube tu archivo 'logo.png' a GitHub.")
+    st.warning("⚠️ Sube tu archivo 'logo.png' a GitHub para activarlo.")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 2. CONEXIÓN API Y CONFIGURACIÓN DE SEGURIDAD
+# 2. CONEXIÓN API Y CONFIGURACIÓN DE SEGURIDAD (Escudo contra bloqueos)
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
     st.error("Falta la API KEY en los Secrets de Streamlit.")
     st.stop()
 
-# Ajuste de Seguridad para evitar bloqueos por términos culinarios
+# Ajuste de Seguridad para evitar bloqueos por términos de cocina
 safety_settings = [
     {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
     {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-]
-
-# 3. EL CEREBRO DEL CHEF: MENTOR GENTIL Y TÁCTICO
-instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y divertido. \n\n"
-    "REGLA DE IDENTIDAD:\n"
-    "* El usuario es el 'cocinero' o 'cocinera'. NUNCA llames al usuario 'Chefcito'.\n"
-    "* Si el usuario te da las gracias, responde: 'De nada' o 'Con todo gusto, cocinero(a)'.\n\n"
-    "REGLA DE FORMATO VISUAL (ESTRICTA):\n"
-    "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* SALTO DE LÍNEA POST-TÍTULO: Tras el título en negrita, DEJA UNA LÍNEA EN BLANCO antes del primer emoji.\n"
-    "* DICCIONARIO DE EMOJIS
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT",
