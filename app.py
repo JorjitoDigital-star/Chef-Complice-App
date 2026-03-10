@@ -3,24 +3,24 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO DE INTERFAZ MÓVIL (24px, Alineación Izquierda y Zero Margins)
+# 1. DISEÑO VISUAL ACCESIBLE (24px y Alineación Izquierda Total)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* Fuente a 24px para máxima legibilidad */
+    /* Fuente a 24px en todo el chat */
     .stChatMessage, p, li, div, span {
         font-size: 24px !important;
         line-height: 1.4 !important;
         text-align: left !important;
     }
     
-    /* Cajetilla de entrada a 24px */
+    /* Fuente a 24px en la entrada de texto */
     .stChatInput textarea {
         font-size: 24px !important;
     }
 
-    /* Alineación extrema a la izquierda (Sin burbujas ni sangrías) */
+    /* Eliminar burbujas y espacios laterales para ganar ancho de pantalla */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -31,7 +31,7 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* Cabecera centrada e icónica */
+    /* Cabecera centrada e identidad */
     .header-container {
         text-align: center;
         margin-bottom: 20px;
@@ -67,28 +67,27 @@ else:
     st.error("Falta la API KEY en los Secrets.")
     st.stop()
 
-# 3. EL CEREBRO TÁCTICO: MENTOR, BREVE Y ORDENADO
+# 3. EL CEREBRO DEL CHEF: MENTOR GENTIL, DIVERTIDO Y TÁCTICO
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un mentor de cocina amable y divertido. \n\n"
-    "REGLAS DE FORMATO (OBLIGATORIAS):\n"
+    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y muy divertido.\n\n"
+    "REGLA DE ORO DE FORMATO (ESTRICTA):\n"
     "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* PROHIBIDO usar números (1., 2.) o viñetas de punto (*).\n"
-    "* CADA EMOJI DEBE EMPEZAR EN UNA NUEVA LÍNEA PEGALO AL MARGEN IZQUIERDO:\n"
-    "  📍 Para cada ingrediente.\n"
-    "  🔥 Para cada paso de preparación.\n"
+    "* CADA EMOJI ES UNA NUEVA LÍNEA INDEPENDIENTE. PROHIBIDO poner dos emojis en el mismo renglón o hacer párrafos.\n"
+    "  📍 Para ingredientes (cada uno en su línea).\n"
+    "  🔥 Para pasos (cada uno en su línea).\n"
     "  💡 Para el Tip de Oro.\n"
-    "* NO repitas los encabezados. 'Información Nutricional' solo va una vez al final.\n\n"
-    "REGLAS DE TONO Y BREVEDAD:\n"
-    "* Sé táctico: Máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
-    "* Usa frases divertidas como '¡Oído cocina!' o '¡A los fogones!' brevemente.\n"
+    "* NUNCA uses números (1., 2.) ni viñetas normales (*).\n\n"
+    "TONO Y BREVEDAD:\n"
+    "* Sé un mentor táctico: máximo 15 palabras por cada línea de emoji.\n"
+    "* Sé divertido y amable: usa '¡Oído cocina!', '¡A los fogones!' o '¡Vamos allá!'.\n"
+    "* 'Información Nutricional' solo se escribe UNA VEZ al final con adjetivos breves (sin números).\n"
     "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
-    "REGLAS DE LÓGICA:\n"
-    "* Memoria: Si ya sabes el país y comensales, no los pidas de nuevo.\n"
-    "* Nutrición: Descripción breve y adjetivada. SIN números ni porcentajes."
+    "MEMORIA:\n"
+    "* Si ya sabes el país y comensales, no los pidas de nuevo."
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Mantenemos la versión estable
+    model_name='gemini-2.5-flash', # Motor estable
     system_instruction=instrucciones_maestras
 )
 
@@ -102,7 +101,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. INTERACCIÓN Y WHATSAPP
+# 5. INTERACCIÓN Y COMPARTIR
 if prompt := st.chat_input("Dime tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -127,10 +126,10 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             placeholder.markdown(full_text)
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             
-            # Botón de WhatsApp al margen izquierdo sin interferir con el texto
+            # Botón de WhatsApp
             text_for_url = urllib.parse.quote(full_text)
-            whatsapp_html = '<a href="https://wa.me/?text={0}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>'.format(text_for_url)
+            whatsapp_html = f'<a href="https://wa.me/?text={text_for_url}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>'
             st.markdown(whatsapp_html, unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Error al generar la respuesta: {e}")
+            st.error(f"Error: {e}")
