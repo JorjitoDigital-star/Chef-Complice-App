@@ -3,24 +3,24 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL ACCESIBLE (24px y Alineación Izquierda Total)
+# 1. DISEÑO VISUAL ACCESIBLE (24px, Alineación Izquierda Total)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* Fuente a 24px en todo el chat */
+    /* Fuente a 24px para todo el contenido */
     .stChatMessage, p, li, div, span {
         font-size: 24px !important;
-        line-height: 1.4 !important;
+        line-height: 1.5 !important;
         text-align: left !important;
     }
     
-    /* Fuente a 24px en la entrada de texto */
+    /* Fuente a 24px en la cajetilla de entrada */
     .stChatInput textarea {
         font-size: 24px !important;
     }
 
-    /* Eliminar burbujas y espacios laterales para ganar ancho de pantalla */
+    /* Alineación extrema a la izquierda (Sin burbujas ni sangrías) */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -31,7 +31,7 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* Cabecera centrada e identidad */
+    /* Cabecera centrada e icónica */
     .header-container {
         text-align: center;
         margin-bottom: 20px;
@@ -64,30 +64,30 @@ st.markdown("""
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la API KEY en los Secrets.")
+    st.error("Falta la API KEY en los Secrets de Streamlit.")
     st.stop()
 
-# 3. EL CEREBRO DEL CHEF: MENTOR GENTIL, DIVERTIDO Y TÁCTICO
+# 3. EL CEREBRO DEL CHEF: MENTOR GENTIL Y TÁCTICO (ORDEN VERTICAL)
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y muy divertido.\n\n"
-    "REGLA DE ORO DE FORMATO (ESTRICTA):\n"
+    "Eres 'Tu Chefcito', un mentor de cocina amable, gentil y divertido. \n\n"
+    "REGLA DE ORO DE FORMATO (PARA MÓVIL):\n"
     "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
-    "* CADA EMOJI ES UNA NUEVA LÍNEA INDEPENDIENTE. PROHIBIDO poner dos emojis en el mismo renglón o hacer párrafos.\n"
-    "  📍 Para ingredientes (cada uno en su línea).\n"
-    "  🔥 Para pasos (cada uno en su línea).\n"
+    "* CADA EMOJI DEBE IR EN UNA LÍNEA NUEVA E INDEPENDIENTE. USA UN SALTO DE LÍNEA DOBLE DESPUÉS DE CADA LÍNEA.\n"
+    "  📍 Para cada ingrediente.\n"
+    "  🔥 Para cada paso de preparación.\n"
     "  💡 Para el Tip de Oro.\n"
-    "* NUNCA uses números (1., 2.) ni viñetas normales (*).\n\n"
+    "* PROHIBIDO amontonar emojis o escribir en forma de párrafo.\n\n"
     "TONO Y BREVEDAD:\n"
-    "* Sé un mentor táctico: máximo 15 palabras por cada línea de emoji.\n"
-    "* Sé divertido y amable: usa '¡Oído cocina!', '¡A los fogones!' o '¡Vamos allá!'.\n"
-    "* 'Información Nutricional' solo se escribe UNA VEZ al final con adjetivos breves (sin números).\n"
+    "* Sé un mentor táctico: máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
+    "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' solo al inicio o cierre.\n"
+    "* 'Información Nutricional' solo va UNA VEZ al final (sin números ni %). \n"
     "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
     "MEMORIA:\n"
-    "* Si ya sabes el país y comensales, no los pidas de nuevo."
+    "* Si ya sabes el país y comensales por el historial, no los vuelvas a pedir."
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Motor estable
+    model_name='gemini-2.5-flash', # Tu motor estable
     system_instruction=instrucciones_maestras
 )
 
@@ -132,4 +132,4 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             st.markdown(whatsapp_html, unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error al generar la respuesta: {e}")
