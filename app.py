@@ -3,7 +3,7 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL PROFESIONAL (Logo, 24px y Alineación Izquierda)
+# 1. DISEÑO VISUAL PREMIUM (Logo, 24px y Alineación Izquierda)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
@@ -20,7 +20,7 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* 3. Alineación 'Zero Margin' (Texto pegado a la izquierda) */
+    /* 3. Alineación 'Zero Margin' (Texto pegado al borde izquierdo) */
     [data-testid="stChatMessage"] {
         background-color: transparent !important;
         padding-left: 0px !important;
@@ -31,19 +31,14 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* 4. Cabecera centrada para el logo */
+    /* 4. Cabecera centrada para el logo (Sin título de texto) */
     .header-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-        margin-bottom: 20px;
-    }
-    .chef-title { 
-        font-size: 45px !important; 
-        font-weight: bold; 
-        margin-top: 10px; 
+        margin-bottom: 30px; /* Un poco más de espacio abajo */
     }
     
     /* 5. Botón WhatsApp sofisticado */
@@ -62,13 +57,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Renderizado de Cabecera con tu Logo de 2000px (ajustado visualmente)
+# Renderizado de Cabecera: Solo el Logo (Limpio y minimalista)
 st.markdown('<div class="header-container">', unsafe_allow_html=True)
 try:
-    st.image("logo.png", width=250) # Ajuste de tamaño para móvil/web
+    # Mostramos tu logo de 2000px con un ancho visual elegante
+    st.image("logo.png", width=250) 
 except:
-    st.warning("⚠️ No se encontró el archivo 'logo.png'. Súbelo a GitHub para verlo.")
-st.markdown('<div class="chef-title">Tu Chefcito</div></div>', unsafe_allow_html=True)
+    st.warning("⚠️ Sube tu archivo 'logo.png' a GitHub para verlo aquí.")
+st.markdown('</div>', unsafe_allow_html=True)
 
 # 2. CONEXIÓN API
 if "GOOGLE_API_KEY" in st.secrets:
@@ -93,7 +89,7 @@ instrucciones_maestras = (
     "* CADA EMOJI DEBE SER UN PÁRRAFO INDEPENDIENTE CON UNA LÍNEA EN BLANCO ENTRE ELLOS.\n"
     "* PROHIBIDO usar números o viñetas normales (*).\n\n"
     "TONO Y BREVEDAD:\n"
-    "* Máximo 15 PALABRAS por cada línea de emoji. Ve al grano.\n"
+    "* Máximo 15 PALABRAS por cada línea de emoji. Sé táctico.\n"
     "* Sé divertido: usa '¡Oído cocina!' o '¡A los fogones!' brevemente.\n"
     "* 'Información Nutricional' se mantiene como descripción breve al final.\n"
     "* Cierre único: 'Un cusicusa y estamos aquí'.\n\n"
@@ -102,7 +98,7 @@ instrucciones_maestras = (
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash', # Tu motor estable
+    model_name='gemini-2.5-flash', # Tu motor estable de 2026
     system_instruction=instrucciones_maestras
 )
 
@@ -142,9 +138,4 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             
             # Botón de WhatsApp
-            text_for_url = urllib.parse.quote(full_text)
-            whatsapp_html = f'<a href="https://wa.me/?text={text_for_url}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>'
-            st.markdown(whatsapp_html, unsafe_allow_html=True)
-
-        except Exception as e:
-            st.error(f"Error: {e}")
+            text_for_url = urllib.parse.quote(full_text
