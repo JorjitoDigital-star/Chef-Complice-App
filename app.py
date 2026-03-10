@@ -3,15 +3,15 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL MÓVIL EXTREMO (Alineación izquierda y 24px)
+# 1. DISEÑO DE INTERFAZ MÓVIL (Alineación izquierda, 24px y Negritas)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* 1. Fuente a 24px para todo el chat */
+    /* 1. Fuente a 24px para todo el contenido */
     .stChatMessage, p, li, div, span {
         font-size: 24px !important;
-        line-height: 1.3 !important;
+        line-height: 1.4 !important;
         text-align: left !important;
     }
     
@@ -20,9 +20,10 @@ st.markdown("""
         font-size: 24px !important;
     }
 
-    /* 3. Ajuste de márgenes para ganar espacio lateral en móvil */
-    .stChatMessage {
-        padding-left: 5px !important;
+    /* 3. Alineación extrema a la izquierda (eliminando burbujas y espacios) */
+    [data-testid="stChatMessage"] {
+        background-color: transparent !important;
+        padding-left: 0px !important;
         margin-left: 0px !important;
     }
     [data-testid="stChatMessageContent"] {
@@ -30,7 +31,7 @@ st.markdown("""
         padding-left: 0px !important;
     }
 
-    /* 4. Cabecera centrada para identidad visual */
+    /* 4. Cabecera centrada e icónica */
     .header-container {
         text-align: center;
         margin-bottom: 20px;
@@ -38,7 +39,7 @@ st.markdown("""
     .chef-icon { font-size: 80px !important; }
     .chef-title { font-size: 45px !important; font-weight: bold; margin-top: -10px; }
     
-    /* 5. Estilo del botón WhatsApp */
+    /* 5. Botón WhatsApp Estilizado */
     .whatsapp-btn {
         display: inline-block;
         padding: 14px 25px;
@@ -49,6 +50,7 @@ st.markdown("""
         font-size: 20px;
         font-weight: bold;
         margin-top: 15px;
+        text-align: center;
     }
     </style>
     
@@ -62,30 +64,30 @@ st.markdown("""
 if "GOOGLE_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 else:
-    st.error("Falta la API KEY en los Secrets.")
+    st.error("Falta la API KEY en los Secrets de Streamlit.")
     st.stop()
 
-# 3. EL CEREBRO DE TU CHEFCITO (Alineación izquierda y emojis)
+# 3. EL CEREBRO TÁCTICO: ORDEN, NEGRITAS Y BREVEDAD
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un experto amable y divertido.\n\n"
-    "REGLAS DE FORMATO (SIN NÚMEROS):\n"
-    "* PROHIBIDO usar numeración (1., 2., 3.) o viñetas de punto (*).\n"
-    "* Usa EXCLUSIVAMENTE estos emojis al inicio de línea:\n"
-    "  📍 Para cada ingrediente.\n"
-    "  🔥 Para cada paso de la preparación.\n"
-    "  💡 Para tu único 'Tip de Oro'.\n"
-    "* Alinea todo al margen izquierdo. No dejes sangrías.\n\n"
+    "Eres 'Tu Chefcito', un experto amable y divertido. \n\n"
+    "REGLAS DE FORMATO (ESTRICTAS):\n"
+    "* Usa estas secciones en negrita: **Para comprar**, **Preparación**, **Tip de Oro**, **Información Nutricional**.\n"
+    "* PROHIBIDO usar números (1., 2.) o viñetas de punto (*).\n"
+    "* Cada instrucción debe empezar con su emoji en una NUEVA LÍNEA:\n"
+    "  📍 Para ingredientes (debajo de **Para comprar**).\n"
+    "  🔥 Para pasos (debajo de **Preparación**).\n"
+    "  💡 Para el tip (debajo de **Tip de Oro**).\n\n"
+    "REGLAS DE TONO Y BREVEDAD:\n"
+    "* Sé 10% más sintético: evita introducciones largas. Ve al grano con alegría.\n"
+    "* Máximo 15 palabras por cada línea de emoji. \n"
+    "* Usa 'Un cusicusa y estamos aquí' solo para saludar o despedir.\n\n"
     "REGLAS DE LÓGICA:\n"
-    "* Memoria: Si ya sabes el país y comensales, no los pidas de nuevo.\n"
-    "* Sentido Común: Si piden postre y solo hay salado, pide ingredientes dulces.\n"
-    "* Nutrición: Breve, con adjetivos y SIN porcentajes ni números.\n\n"
-    "CIERRE:\n"
-    "* Si el usuario termina, responde con cariño invitando a volver y cierra con: "
-    "'Un cusicusa y estamos aquí'. No hagas más preguntas."
+    "* Memoria: Si ya conoces el país y comensales, no los pidas de nuevo.\n"
+    "* Nutrición: Descripción breve, adjetivada y SIN números ni porcentajes."
 )
 
 model = genai.GenerativeModel(
-    model_name='gemini-2.5-flash',
+    model_name='gemini-3-flash', # Actualizado a tu tier Paid
     system_instruction=instrucciones_maestras
 )
 
@@ -99,7 +101,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. INTERACCIÓN
+# 5. INTERACCIÓN Y WHATSAPP
 if prompt := st.chat_input("Dime tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
