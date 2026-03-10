@@ -3,34 +3,40 @@ import google.generativeai as genai
 import time
 import urllib.parse
 
-# 1. DISEÑO VISUAL ACCESIBLE (Todo a 24px y Centrado)
+# 1. DISEÑO VISUAL MÓVIL EXTREMO (Alineación izquierda y 24px)
 st.set_page_config(page_title="Tu Chefcito 👨‍🍳", page_icon="👨‍🍳")
 
 st.markdown("""
     <style>
-    /* 1. Fuente de mensajes y textos generales */
+    /* 1. Fuente a 24px para todo el chat */
     .stChatMessage, p, li, div, span {
         font-size: 24px !important;
         line-height: 1.3 !important;
+        text-align: left !important;
     }
     
-    /* 2. FUENTE DE LA CAJETILLA DE ENTRADA (Input) */
-    /* Ajustamos el área de texto y el marcador de posición (placeholder) */
+    /* 2. Fuente a 24px en la cajetilla de entrada */
     .stChatInput textarea {
         font-size: 24px !important;
-        line-height: 1.4 !important;
     }
-    
-    /* 3. Cabecera centrada y grande para identidad visual */
+
+    /* 3. Ajuste de márgenes para ganar espacio lateral en móvil */
+    .stChatMessage {
+        padding-left: 5px !important;
+        margin-left: 0px !important;
+    }
+    [data-testid="stChatMessageContent"] {
+        margin-left: 0px !important;
+        padding-left: 0px !important;
+    }
+
+    /* 4. Cabecera centrada para identidad visual */
     .header-container {
         text-align: center;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
     }
-    .chef-icon { font-size: 85px !important; }
-    .chef-title { font-size: 50px !important; font-weight: bold; margin-top: -10px; }
-    
-    /* 4. Numeración pegada a la izquierda para ganar ancho en móvil */
-    ol { padding-left: 25px !important; } 
+    .chef-icon { font-size: 80px !important; }
+    .chef-title { font-size: 45px !important; font-weight: bold; margin-top: -10px; }
     
     /* 5. Estilo del botón WhatsApp */
     .whatsapp-btn {
@@ -43,7 +49,6 @@ st.markdown("""
         font-size: 20px;
         font-weight: bold;
         margin-top: 15px;
-        text-align: center;
     }
     </style>
     
@@ -60,21 +65,23 @@ else:
     st.error("Falta la API KEY en los Secrets.")
     st.stop()
 
-# 3. EL CEREBRO DE TU CHEFCITO (Amable, Táctico y con Memoria)
+# 3. EL CEREBRO DE TU CHEFCITO (Alineación izquierda y emojis)
 instrucciones_maestras = (
-    "Eres 'Tu Chefcito', un experto culinario amable, gentil y divertido.\n\n"
-    "REGLAS DE FORMATO MÓVIL:\n"
-    "* Usa EXCLUSIVAMENTE numeración (1., 2., 3.) para listas. PROHIBIDO usar viñetas.\n"
-    "* Sé táctico y sintético: Ve al grano amablemente para evitar scroll excesivo.\n"
-    "* Pasos: Máximo 15 palabras por cada número.\n\n"
-    "REGLAS DE LÓGICA Y MEMORIA:\n"
-    "* Memoria: Si ya sabes el país y comensales por el historial, NO los pidas de nuevo.\n"
-    "* Sentido Común: Si piden postre y solo hay cosas saladas, detente y pide ingredientes dulces.\n"
-    "* Tip de Oro: Comparte solo UN tip profesional de experiencia por cada receta.\n"
-    "* Nutrición: Breve descripción adjetivada. PROHIBIDO usar números o el símbolo (%).\n\n"
-    "IDENTIDAD Y CIERRE:\n"
-    "* Inicio: '¡Hola! Soy Tu Chefcito 👨‍🍳. Un cusicusa y estamos aquí...'. Solo al empezar.\n"
-    "* Despedida: Si el usuario termina, responde con cariño: '¡Fue un placer! Llámame cuando me necesites. Un cusicusa y estamos aquí'. No preguntes nada más."
+    "Eres 'Tu Chefcito', un experto amable y divertido.\n\n"
+    "REGLAS DE FORMATO (SIN NÚMEROS):\n"
+    "* PROHIBIDO usar numeración (1., 2., 3.) o viñetas de punto (*).\n"
+    "* Usa EXCLUSIVAMENTE estos emojis al inicio de línea:\n"
+    "  📍 Para cada ingrediente.\n"
+    "  🔥 Para cada paso de la preparación.\n"
+    "  💡 Para tu único 'Tip de Oro'.\n"
+    "* Alinea todo al margen izquierdo. No dejes sangrías.\n\n"
+    "REGLAS DE LÓGICA:\n"
+    "* Memoria: Si ya sabes el país y comensales, no los pidas de nuevo.\n"
+    "* Sentido Común: Si piden postre y solo hay salado, pide ingredientes dulces.\n"
+    "* Nutrición: Breve, con adjetivos y SIN porcentajes ni números.\n\n"
+    "CIERRE:\n"
+    "* Si el usuario termina, responde con cariño invitando a volver y cierra con: "
+    "'Un cusicusa y estamos aquí'. No hagas más preguntas."
 )
 
 model = genai.GenerativeModel(
@@ -92,7 +99,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# 5. INTERACCIÓN Y WHATSAPP
+# 5. INTERACCIÓN
 if prompt := st.chat_input("Dime tus ingredientes..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -117,11 +124,10 @@ if prompt := st.chat_input("Dime tus ingredientes..."):
             placeholder.markdown(full_text)
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             
-            # Botón de WhatsApp al final de la receta
+            # Botón de WhatsApp
             text_for_url = urllib.parse.quote(full_text)
-            whatsapp_url = f"https://wa.me/?text={text_for_url}"
-            
-            st.markdown(f'<a href="{whatsapp_url}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>', unsafe_allow_html=True)
+            whatsapp_html = '<a href="https://wa.me/?text={0}" target="_blank" class="whatsapp-btn">📲 Compartir por WhatsApp</a>'.format(text_for_url)
+            st.markdown(whatsapp_html, unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Error al generar la respuesta: {e}")
+            st.error(f"Error: {e}")
